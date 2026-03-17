@@ -81,6 +81,9 @@ app.get('/health', (req, res) => {
 
 // ─── API Routes ───────────────────────────────────────────────────────────────
 app.use('/api/auth', authRoutes);
+app.get("/", (req, res) => {
+  res.send("🚀 PrintMixBox API is running...");
+});
 
 // Future modules — uncomment when implemented:
 // app.use('/api/companies', require('./routes/companyRoutes'));
