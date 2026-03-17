@@ -34,7 +34,7 @@ app.use(helmet({
 const allowedOrigins = [
   process.env.FRONTEND_URL || 'http://localhost:5173', 
   'https://printmixbox.vercel.app', // Replace with your Vercel URL
-  'https://saas-platform-lyart.vercel.app/', 'https://saas-platform.vercel.app/' // Replace with your Vercel URL
+  'https://saas-platform-lyart.vercel.app', 'https://saas-platform.vercel.app' // Replace with your Vercel URL
 ];
 
 app.use(cors({
