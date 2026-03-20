@@ -1,57 +1,64 @@
-// src/App.js
-// ─────────────────────────────────────────────
-//  Root Application Component
-//  Routing + Auth Context Provider
-// ─────────────────────────────────────────────
-
+// src/App.jsx
 import React from 'react';
-import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
-import { AuthProvider } from './context/AuthContext.jsx';
-import PrivateRoute from './components/PrivateRoute';
+import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 
-// Pages
-import Register from './pages/Register';
-import Verify from './pages/Verify';
-import Login from './pages/Login';
-import Dashboard from './pages/Dashboard';
+// Contexts
+import { AuthProvider }      from './context/AuthContext';
+import { AdminAuthProvider } from './context/AdminAuthContext';
 
-// Global styles
-import './index.css';
+// Route guards
+import { PrivateRoute, AdminRoute } from './components/PrivateRoute';
 
-function App() {
+// Company portal pages
+import Register       from './pages/Register';
+import Login          from './pages/Login';
+import Dashboard      from './pages/Dashboard';
+import ChangePassword from './pages/ChangePassword';
+
+// Admin panel pages
+import AdminLogin     from './pages/admin/AdminLogin';
+import AdminLayout    from './pages/admin/AdminLayout';
+import AdminDashboard from './pages/admin/AdminDashboard';
+import Companies      from './pages/admin/Companies';
+import CompanyDetail  from './pages/admin/CompanyDetail';
+
+export default function App() {
   return (
-    <AuthProvider>
-      <Router>
-        <Routes>
-          {/* Public Routes */}
-          <Route path="/register" element={<Register />} />
-          <Route path="/verify"   element={<Verify />} />
-          <Route path="/login"    element={<Login />} />
+    <BrowserRouter>
+      <AdminAuthProvider>
+        <AuthProvider>
+          <Routes>
 
-          {/* Protected Routes */}
-          <Route
-            path="/dashboard"
-            element={
-              <PrivateRoute>
-                <Dashboard />
-              </PrivateRoute>
-            }
-          />
+            {/* ── Company Portal ─────────────────────────── */}
+            <Route path="/register" element={<Register />} />
+            <Route path="/login"    element={<Login />} />
 
-          {/* Future protected routes — add here:
-          <Route path="/printers"  element={<PrivateRoute><Printers /></PrivateRoute>} />
-          <Route path="/jobs"      element={<PrivateRoute><Jobs /></PrivateRoute>} />
-          <Route path="/templates" element={<PrivateRoute><Templates /></PrivateRoute>} />
-          <Route path="/settings"  element={<PrivateRoute><Settings /></PrivateRoute>} />
-          */}
+            <Route path="/dashboard" element={
+              <PrivateRoute><Dashboard /></PrivateRoute>
+            } />
 
-          {/* Default redirect */}
-          <Route path="/" element={<Navigate to="/login" replace />} />
-          <Route path="*" element={<Navigate to="/login" replace />} />
-        </Routes>
-      </Router>
-    </AuthProvider>
+            <Route path="/change-password" element={
+              <PrivateRoute><ChangePassword /></PrivateRoute>
+            } />
+
+            {/* ── Admin Panel ───────────────────────────── */}
+            <Route path="/admin/login" element={<AdminLogin />} />
+
+            <Route path="/admin" element={
+              <AdminRoute><AdminLayout /></AdminRoute>
+            }>
+              <Route index          element={<AdminDashboard />} />
+              <Route path="companies"     element={<Companies />} />
+              <Route path="companies/:id" element={<CompanyDetail />} />
+            </Route>
+
+            {/* ── Redirects ─────────────────────────────── */}
+            <Route path="/"  element={<Navigate to="/login" replace />} />
+            <Route path="*"  element={<Navigate to="/login" replace />} />
+
+          </Routes>
+        </AuthProvider>
+      </AdminAuthProvider>
+    </BrowserRouter>
   );
 }
-
-export default App;

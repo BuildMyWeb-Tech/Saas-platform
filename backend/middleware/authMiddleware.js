@@ -1,123 +1,84 @@
 // middleware/authMiddleware.js
-// ─────────────────────────────────────────────
-//  JWT Authentication Middleware
-//  Protects private routes from unauthenticated access
-// ─────────────────────────────────────────────
-
-const jwt = require('jsonwebtoken');
-const User = require('../models/User');
+const jwt     = require('jsonwebtoken');
+const User    = require('../models/User');
 const Company = require('../models/Company');
+const AdminUser = require('../models/AdminUser');
 
-/**
- * protect — verifies JWT and attaches user to req.user
- */
+// ── Company user JWT guard ────────────────────────────────────────────────────
 const protect = async (req, res, next) => {
   try {
     let token;
-
-    // Extract token from Authorization header
-    if (req.headers.authorization && req.headers.authorization.startsWith('Bearer ')) {
+    if (req.headers.authorization?.startsWith('Bearer '))
       token = req.headers.authorization.split(' ')[1];
-    }
 
-    if (!token) {
-      return res.status(401).json({
-        success: false,
-        message: 'Access denied. No token provided.',
-      });
-    }
+    if (!token) return res.status(401).json({ success: false, message: 'Access denied. No token provided.' });
 
-    // Verify token
     let decoded;
     try {
       decoded = jwt.verify(token, process.env.JWT_SECRET, {
-        issuer: 'printmixbox',
+        issuer:   'printmixbox',
         audience: 'printmixbox-client',
       });
-    } catch (jwtError) {
-      if (jwtError.name === 'TokenExpiredError') {
-        return res.status(401).json({
-          success: false,
-          message: 'Token expired. Please login again.',
-          code: 'TOKEN_EXPIRED',
-        });
-      }
-      return res.status(401).json({
-        success: false,
-        message: 'Invalid token.',
-        code: 'TOKEN_INVALID',
-      });
+    } catch (e) {
+      if (e.name === 'TokenExpiredError')
+        return res.status(401).json({ success: false, message: 'Token expired. Please login again.', code: 'TOKEN_EXPIRED' });
+      return res.status(401).json({ success: false, message: 'Invalid token.', code: 'TOKEN_INVALID' });
     }
 
-    // Verify user still exists and is active
-    const user = await User.findById(decoded.userId).select('-passwordHash');
-    if (!user || !user.isActive) {
-      return res.status(401).json({
-        success: false,
-        message: 'User no longer exists or has been deactivated.',
-      });
-    }
+    const [user, company] = await Promise.all([
+      User.findById(decoded.userId),
+      Company.findById(decoded.companyId),
+    ]);
 
-    // Verify company is still active & verified
-    const company = await Company.findById(decoded.companyId);
-    if (!company || !company.isActive || !company.isVerified) {
-      return res.status(403).json({
-        success: false,
-        message: 'Company account is inactive or unverified.',
-      });
-    }
+    if (!user || !user.isActive)       return res.status(401).json({ success: false, message: 'User not found or inactive.' });
+    if (!company || !company.isActive) return res.status(403).json({ success: false, message: 'Company account inactive.' });
 
-    // Attach to request
-    req.user = {
-      userId: decoded.userId,
-      companyId: decoded.companyId,
-      username: decoded.username,
-      role: decoded.role,
-    };
-
+    req.user = { userId: decoded.userId, companyId: decoded.companyId, username: decoded.username, role: decoded.role };
     next();
-  } catch (error) {
-    console.error('Auth middleware error:', error);
-    return res.status(500).json({
-      success: false,
-      message: 'Authentication error.',
-    });
+  } catch (err) {
+    console.error('protect middleware:', err);
+    return res.status(500).json({ success: false, message: 'Authentication error.' });
   }
 };
 
-/**
- * authorize — restrict access to specific roles
- * Usage: router.get('/admin', protect, authorize('owner', 'admin'), handler)
- */
-const authorize = (...roles) => {
-  return (req, res, next) => {
-    if (!roles.includes(req.user.role)) {
-      return res.status(403).json({
-        success: false,
-        message: `Access denied. Required role: ${roles.join(' or ')}. Your role: ${req.user.role}`,
-      });
+// ── Admin JWT guard ───────────────────────────────────────────────────────────
+const adminProtect = async (req, res, next) => {
+  try {
+    let token;
+    if (req.headers.authorization?.startsWith('Bearer '))
+      token = req.headers.authorization.split(' ')[1];
+
+    if (!token) return res.status(401).json({ success: false, message: 'Admin access denied. No token.' });
+
+    let decoded;
+    try {
+      decoded = jwt.verify(
+        token,
+        process.env.JWT_ADMIN_SECRET || process.env.JWT_SECRET,
+        { issuer: 'printmixbox-admin', audience: 'printmixbox-admin-panel' }
+      );
+    } catch (e) {
+      if (e.name === 'TokenExpiredError')
+        return res.status(401).json({ success: false, message: 'Admin session expired.', code: 'TOKEN_EXPIRED' });
+      return res.status(401).json({ success: false, message: 'Invalid admin token.' });
     }
+
+    const admin = await AdminUser.findById(decoded.adminId);
+    if (!admin || !admin.isActive)
+      return res.status(401).json({ success: false, message: 'Admin account not found or inactive.' });
+
+    req.admin = { adminId: decoded.adminId, username: decoded.username, role: decoded.role };
     next();
-  };
+  } catch (err) {
+    console.error('adminProtect middleware:', err);
+    return res.status(500).json({ success: false, message: 'Admin authentication error.' });
+  }
 };
 
-/**
- * requireSameCompany — ensure user only accesses their own company's resources
- * Compares req.user.companyId with a :companyId param or body field
- */
-const requireSameCompany = (req, res, next) => {
-  const targetCompanyId =
-    req.params.companyId ||
-    req.body.companyId ||
-    req.query.companyId;
-
-  if (targetCompanyId && targetCompanyId !== req.user.companyId) {
-    return res.status(403).json({
-      success: false,
-      message: 'Access denied. You can only access your own company resources.',
-    });
-  }
+const authorize = (...roles) => (req, res, next) => {
+  if (!roles.includes(req.user?.role))
+    return res.status(403).json({ success: false, message: `Access denied. Required role: ${roles.join(' or ')}.` });
   next();
 };
 
-module.exports = { protect, authorize, requireSameCompany };
+module.exports = { protect, adminProtect, authorize };

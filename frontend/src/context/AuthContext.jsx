@@ -1,93 +1,53 @@
+// src/context/AuthContext.jsx
 import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
-import { getStoredAuth, logout as logoutService, getMe } from '../services/authService';
+import { getStoredAuth, logout as logoutSvc } from '../services/authService';
 
-// ✅ CHANGE THIS LINE
-export const AuthContext = createContext(null);
+const AuthContext = createContext(null);
 
 export const AuthProvider = ({ children }) => {
-  const [authState, setAuthState] = useState({
+  const [state, setState] = useState({
     isAuthenticated: false,
     isLoading: true,
-    user: null,
-    company: null,
-    token: null,
+    user: null, company: null, token: null,
+    isTemporaryPassword: false,
   });
 
   useEffect(() => {
-    const initAuth = async () => {
-      const stored = getStoredAuth();
-      const token = localStorage.getItem('pmb_token');
-
-      if (stored && token) {
-        setAuthState({
-          isAuthenticated: true,
-          isLoading: false,
-          user: stored.user,
-          company: stored.company,
-          token,
-        });
-
-        try {
-          await getMe();
-        } catch {}
-      } else {
-        setAuthState((prev) => ({ ...prev, isLoading: false }));
-      }
-    };
-
-    initAuth();
+    const stored = getStoredAuth();
+    const token  = localStorage.getItem('pmb_token');
+    if (stored && token) {
+      setState({ isAuthenticated: true, isLoading: false, user: stored.user, company: stored.company, token, isTemporaryPassword: stored.isTemporaryPassword || false });
+    } else {
+      setState(p => ({ ...p, isLoading: false }));
+    }
   }, []);
 
-  const login = useCallback((authData) => {
-    const { token, user, company } = authData;
-    setAuthState({
-      isAuthenticated: true,
-      isLoading: false,
-      user,
-      company,
-      token,
-    });
+  const login = useCallback((data) => {
+    setState({ isAuthenticated: true, isLoading: false, user: data.user, company: data.company, token: data.token, isTemporaryPassword: data.isTemporaryPassword || false });
   }, []);
 
   const logout = useCallback(() => {
-    logoutService();
-    setAuthState({
-      isAuthenticated: false,
-      isLoading: false,
-      user: null,
-      company: null,
-      token: null,
-    });
+    logoutSvc();
+    setState({ isAuthenticated: false, isLoading: false, user: null, company: null, token: null, isTemporaryPassword: false });
   }, []);
 
-  const updateUser = useCallback((userData) => {
-    setAuthState((prev) => ({
-      ...prev,
-      user: { ...prev.user, ...userData },
-    }));
+  const clearTempPassword = useCallback(() => {
+    setState(p => ({ ...p, isTemporaryPassword: false }));
+    const raw = localStorage.getItem('pmb_auth');
+    if (raw) {
+      try { const d = JSON.parse(raw); d.isTemporaryPassword = false; localStorage.setItem('pmb_auth', JSON.stringify(d)); } catch {}
+    }
   }, []);
 
   return (
-    <AuthContext.Provider
-      value={{
-        ...authState,
-        login,
-        logout,
-        updateUser,
-      }}
-    >
+    <AuthContext.Provider value={{ ...state, login, logout, clearTempPassword }}>
       {children}
     </AuthContext.Provider>
   );
 };
 
 export const useAuth = () => {
-  const context = useContext(AuthContext);
-  if (!context) {
-    throw new Error('useAuth must be used within an AuthProvider');
-  }
-  return context;
+  const ctx = useContext(AuthContext);
+  if (!ctx) throw new Error('useAuth must be inside AuthProvider');
+  return ctx;
 };
-
-// ✅ OPTIONAL (can keep or remove)
-export default AuthContext;

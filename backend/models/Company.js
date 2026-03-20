@@ -1,9 +1,4 @@
 // models/Company.js
-// ─────────────────────────────────────────────
-//  Company Collection Schema
-//  Each registered business is a "Company"
-// ─────────────────────────────────────────────
-
 const mongoose = require('mongoose');
 
 const CompanySchema = new mongoose.Schema(
@@ -15,17 +10,17 @@ const CompanySchema = new mongoose.Schema(
       minlength: [2, 'Company name must be at least 2 characters'],
       maxlength: [100, 'Company name cannot exceed 100 characters'],
     },
-
     gstNumber: {
       type: String,
       required: [true, 'GST number is required'],
       unique: true,
       trim: true,
       uppercase: true,
-      // Indian GST format: 15 alphanumeric characters
-      match: [/^[0-9]{2}[A-Z]{5}[0-9]{4}[A-Z]{1}[1-9A-Z]{1}Z[0-9A-Z]{1}$/, 'Invalid GST number format'],
+      match: [
+        /^[0-9]{2}[A-Z]{5}[0-9]{4}[A-Z]{1}[1-9A-Z]{1}Z[0-9A-Z]{1}$/,
+        'Invalid GST number format',
+      ],
     },
-
     email: {
       type: String,
       required: [true, 'Email is required'],
@@ -34,13 +29,21 @@ const CompanySchema = new mongoose.Schema(
       trim: true,
       match: [/^\S+@\S+\.\S+$/, 'Invalid email format'],
     },
-
     companyCode: {
       type: String,
-      required: true,
       unique: true,
+      sparse: true,       // null until admin approves
       uppercase: true,
-      // Format: COMP-XXXX (generated automatically)
+    },
+
+    // ── Status lifecycle ──────────────────────────────────────
+    // pending   → registered, awaiting admin approval
+    // approved  → admin sent credentials via email
+    // rejected  → admin rejected the application
+    status: {
+      type: String,
+      enum: ['pending', 'approved', 'rejected'],
+      default: 'pending',
     },
 
     isVerified: {
@@ -48,42 +51,26 @@ const CompanySchema = new mongoose.Schema(
       default: false,
     },
 
-    // Subscription tier — extensible for SaaS billing
     plan: {
       type: String,
       enum: ['free', 'starter', 'professional', 'enterprise'],
       default: 'free',
     },
 
-    // For future IoT device quota tracking
-    maxDevices: {
-      type: Number,
-      default: 5,
-    },
+    maxDevices: { type: Number, default: 5 },
+    isActive:   { type: Boolean, default: true },
 
-    isActive: {
-      type: Boolean,
-      default: true,
-    },
+    // Admin notes on approval/rejection
+    adminNote: { type: String, default: '' },
+
+    // Track when credentials were sent
+    credentialsSentAt: { type: Date, default: null },
   },
-  {
-    timestamps: true,
-    toJSON: { virtuals: true },
-    toObject: { virtuals: true },
-  }
+  { timestamps: true, toJSON: { virtuals: true }, toObject: { virtuals: true } }
 );
 
-// Virtual: count of users under this company
-CompanySchema.virtual('users', {
-  ref: 'User',
-  localField: '_id',
-  foreignField: 'companyId',
-  count: true,
-});
-
-// Index for fast lookups
 CompanySchema.index({ companyCode: 1 });
 CompanySchema.index({ email: 1 });
-CompanySchema.index({ gstNumber: 1 });
+CompanySchema.index({ status: 1 });
 
 module.exports = mongoose.model('Company', CompanySchema);

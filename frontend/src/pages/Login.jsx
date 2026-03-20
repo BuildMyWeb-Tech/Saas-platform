@@ -1,274 +1,171 @@
 // src/pages/Login.jsx
-// ─────────────────────────────────────────────
-//  Login Page
-//  Company Code + Username + Password
-// ─────────────────────────────────────────────
-
 import React, { useState, useEffect } from 'react';
 import { Link, useNavigate, useLocation, useSearchParams } from 'react-router-dom';
 import { loginUser } from '../services/authService';
 import { useAuth } from '../context/AuthContext';
 
-const Login = () => {
+export default function Login() {
   const navigate = useNavigate();
   const location = useLocation();
-  const [searchParams] = useSearchParams();
+  const [params]  = useSearchParams();
   const { login, isAuthenticated } = useAuth();
 
-  const [form, setForm] = useState({
-    companyCode: '',
-    username: '',
-    password: '',
-  });
-  const [fieldErrors, setFieldErrors] = useState({});
-  const [serverError, setServerError] = useState('');
-  const [sessionMessage, setSessionMessage] = useState('');
-  const [showPassword, setShowPassword] = useState(false);
-  const [isLoading, setIsLoading] = useState(false);
+  const [form, setForm]     = useState({ companyCode: '', username: '', password: '' });
+  const [errors, setErrors] = useState({});
+  const [serverError, setServer] = useState('');
+  const [sessionMsg, setSession] = useState('');
+  const [showPw, setShowPw]      = useState(false);
+  const [loading, setLoading]    = useState(false);
+  const [pendingMsg, setPending]  = useState('');
 
-  // Redirect if already authenticated
-  useEffect(() => {
-    if (isAuthenticated) {
-      navigate('/dashboard', { replace: true });
-    }
-  }, [isAuthenticated, navigate]);
-
-  // Session expired message
-  useEffect(() => {
-    if (searchParams.get('reason') === 'session_expired') {
-      setSessionMessage('Your session expired. Please log in again.');
-    }
-  }, [searchParams]);
+  useEffect(() => { if (isAuthenticated) navigate('/dashboard', { replace: true }); }, [isAuthenticated, navigate]);
+  useEffect(() => { if (params.get('reason') === 'session_expired') setSession('Your session expired. Please sign in again.'); }, [params]);
 
   const from = location.state?.from?.pathname || '/dashboard';
 
-  const handleChange = (e) => {
+  const onChange = (e) => {
     const { name, value } = e.target;
-    setForm((prev) => ({ ...prev, [name]: value }));
-    if (fieldErrors[name]) setFieldErrors((prev) => ({ ...prev, [name]: '' }));
-    if (serverError) setServerError('');
+    setForm(p => ({ ...p, [name]: value }));
+    if (errors[name]) setErrors(p => ({ ...p, [name]: '' }));
+    if (serverError)  setServer('');
+    setPending('');
   };
 
   const validate = () => {
-    const errors = {};
-    if (!form.companyCode.trim()) errors.companyCode = 'Company code is required';
-    if (!form.username.trim()) errors.username = 'Username is required';
-    if (!form.password) errors.password = 'Password is required';
-    return errors;
+    const e = {};
+    if (!form.companyCode.trim()) e.companyCode = 'Required';
+    if (!form.username.trim())    e.username    = 'Required';
+    if (!form.password)           e.password    = 'Required';
+    return e;
   };
 
-  const handleSubmit = async (e) => {
+  const onSubmit = async (e) => {
     e.preventDefault();
-    setServerError('');
-
-    const errors = validate();
-    if (Object.keys(errors).length > 0) {
-      setFieldErrors(errors);
-      return;
-    }
-
-    setIsLoading(true);
+    setServer(''); setPending('');
+    const errs = validate();
+    if (Object.keys(errs).length) { setErrors(errs); return; }
+    setLoading(true);
     try {
-      const result = await loginUser({
+      const res = await loginUser({
         companyCode: form.companyCode.trim().toUpperCase(),
-        username: form.username.trim().toLowerCase(),
-        password: form.password,
+        username:    form.username.trim().toLowerCase(),
+        password:    form.password,
       });
-
-      if (result.success) {
-        login(result.data);
-        navigate(from, { replace: true });
-      }
+      if (res.success) { login(res.data); navigate(from, { replace: true }); }
     } catch (err) {
-      const data = err.response?.data;
-
-      if (data?.action === 'VERIFY_REQUIRED') {
-        setServerError('');
-        navigate(`/verify?code=${data.companyCode}`);
-        return;
-      }
-
-      setServerError(data?.message || 'Login failed. Check your credentials.');
-    } finally {
-      setIsLoading(false);
-    }
+      const d = err.response?.data;
+      if (d?.status === 'pending')   { setPending(d.message); return; }
+      if (d?.status === 'rejected')  { setServer(d.message); return; }
+      setServer(d?.message || 'Invalid credentials. Please try again.');
+    } finally { setLoading(false); }
   };
 
   return (
     <div className="auth-layout">
-      {/* Left Panel */}
+      {/* Left panel */}
       <div className="auth-panel-left">
-        <div className="grid-bg" />
-
         <div className="panel-brand">
           <div className="panel-brand-logo">
-            <div className="auth-logo-icon">🖨️</div>
+            <div className="auth-logo-icon" style={{ width: 28, height: 28, fontSize: 14 }}>🖨️</div>
             <span className="panel-brand-name">PrintMixBox</span>
           </div>
-
-          <h2 className="panel-headline">
-            Your printing<br />command <em>center</em>
-          </h2>
-          <p className="panel-description">
-            Log in to manage your IoT printers, dispatch
-            branding jobs, and monitor your entire fleet in
-            real-time.
-          </p>
+          <h2 className="panel-headline">Your printing<br /><em>command center</em></h2>
+          <p className="panel-description">Sign in to manage IoT printers, dispatch branding jobs, and monitor your fleet in real-time.</p>
         </div>
-
         <div className="panel-features">
           {[
-            { icon: '🔐', title: 'Company-Isolated Access', desc: 'Secure per-tenant workspace' },
-            { icon: '⚡', title: 'Real-Time Job Queue', desc: 'Instant print dispatching' },
-            { icon: '🌐', title: 'Multi-Device Support', desc: 'Any printer, anywhere' },
-            { icon: '📦', title: 'Box Branding Engine', desc: 'Pixel-perfect brand output' },
-          ].map((f) => (
+            { icon: '🔐', title: 'Company-isolated access',  desc: 'Secure per-tenant workspace with RBAC' },
+            { icon: '⚡', title: 'Real-time job queue',      desc: 'Instant print dispatching and tracking' },
+            { icon: '🌐', title: 'Multi-device support',     desc: 'Manage any printer from anywhere' },
+            { icon: '📦', title: 'Box branding engine',      desc: 'Pixel-perfect brand output at scale' },
+          ].map(f => (
             <div className="panel-feature" key={f.title}>
               <div className="panel-feature-icon">{f.icon}</div>
-              <div className="panel-feature-text">
-                <h4>{f.title}</h4>
-                <p>{f.desc}</p>
-              </div>
+              <div className="panel-feature-text"><h4>{f.title}</h4><p>{f.desc}</p></div>
             </div>
           ))}
         </div>
       </div>
 
-      {/* Right: Login Form */}
+      {/* Right: form */}
       <div className="auth-panel-right">
         <div className="auth-card">
+          <div className="auth-logo">
+            <div className="auth-logo-icon">🖨️</div>
+            <span className="auth-logo-text">PrintMixBox</span>
+          </div>
           <div className="auth-card-header">
-            <div className="auth-logo">
-              <div className="auth-logo-icon">🖨️</div>
-              <span className="auth-logo-text">PrintMixBox</span>
-            </div>
-            <h1 className="auth-title">Sign in</h1>
-            <p className="auth-subtitle">// Access your company dashboard</p>
+            <h1 className="auth-title">Welcome back</h1>
+            <p className="auth-subtitle">Sign in with your company credentials</p>
           </div>
 
-          {/* Session expired notice */}
-          {sessionMessage && (
-            <div className="alert alert-info">
-              🕐 {sessionMessage}
+          {sessionMsg  && <div className="alert alert-info">{sessionMsg}</div>}
+          {pendingMsg  && (
+            <div className="alert alert-warning">
+              <span>⏳</span>
+              <span>{pendingMsg}</span>
             </div>
           )}
+          {serverError && <div className="alert alert-error">{serverError}</div>}
 
-          {/* Server error */}
-          {serverError && (
-            <div className="alert alert-error">⚠ {serverError}</div>
-          )}
-
-          <form onSubmit={handleSubmit} noValidate>
-            {/* Company Code */}
+          <form onSubmit={onSubmit} noValidate>
             <div className="form-group">
               <label className="form-label">Company Code</label>
-              <input
-                type="text"
-                name="companyCode"
-                className={`form-input form-input-mono ${fieldErrors.companyCode ? 'error' : ''}`}
+              <input type="text" name="companyCode"
+                className={`form-input form-input-mono ${errors.companyCode ? 'error' : ''}`}
                 placeholder="COMP-4829"
                 value={form.companyCode}
-                onChange={(e) => handleChange({
-                  target: { name: 'companyCode', value: e.target.value.toUpperCase() }
-                })}
-                maxLength={9}
-                autoComplete="off"
-                autoFocus
+                onChange={e => onChange({ target: { name: 'companyCode', value: e.target.value.toUpperCase() } })}
+                maxLength={9} autoComplete="off" autoFocus
               />
-              {fieldErrors.companyCode && (
-                <div className="form-error">⚠ {fieldErrors.companyCode}</div>
-              )}
+              {errors.companyCode
+                ? <div className="form-error">{errors.companyCode}</div>
+                : <div className="form-hint">Sent to you in the credentials email</div>}
             </div>
 
-            {/* Username */}
             <div className="form-group">
               <label className="form-label">Username</label>
-              <input
-                type="text"
-                name="username"
-                className={`form-input ${fieldErrors.username ? 'error' : ''}`}
+              <input type="text" name="username"
+                className={`form-input ${errors.username ? 'error' : ''}`}
                 placeholder="your_username"
-                value={form.username}
-                onChange={handleChange}
+                value={form.username} onChange={onChange}
                 autoComplete="username"
               />
-              {fieldErrors.username && (
-                <div className="form-error">⚠ {fieldErrors.username}</div>
-              )}
+              {errors.username && <div className="form-error">{errors.username}</div>}
             </div>
 
-            {/* Password */}
             <div className="form-group">
               <label className="form-label">Password</label>
               <div style={{ position: 'relative' }}>
-                <input
-                  type={showPassword ? 'text' : 'password'}
-                  name="password"
-                  className={`form-input ${fieldErrors.password ? 'error' : ''}`}
-                  placeholder="••••••••"
-                  value={form.password}
-                  onChange={handleChange}
+                <input type={showPw ? 'text' : 'password'} name="password"
+                  className={`form-input ${errors.password ? 'error' : ''}`}
+                  placeholder="Enter your password"
+                  value={form.password} onChange={onChange}
                   autoComplete="current-password"
-                  style={{ paddingRight: 44 }}
+                  style={{ paddingRight: 40 }}
                 />
-                <button
-                  type="button"
-                  onClick={() => setShowPassword((s) => !s)}
-                  style={{
-                    position: 'absolute',
-                    right: 12,
-                    top: '50%',
-                    transform: 'translateY(-50%)',
-                    background: 'none',
-                    border: 'none',
-                    cursor: 'pointer',
-                    fontSize: 16,
-                    color: 'var(--text-muted)',
-                    padding: 0,
-                    lineHeight: 1,
-                  }}
-                  title={showPassword ? 'Hide password' : 'Show password'}
-                >
-                  {showPassword ? '🙈' : '👁️'}
+                <button type="button" onClick={() => setShowPw(s => !s)} style={{ position: 'absolute', right: 10, top: '50%', transform: 'translateY(-50%)', background: 'none', border: 'none', cursor: 'pointer', color: 'var(--color-text-tertiary)', padding: 4, fontSize: 14, lineHeight: 1 }}>
+                  {showPw ? '🙈' : '👁️'}
                 </button>
               </div>
-              {fieldErrors.password && (
-                <div className="form-error">⚠ {fieldErrors.password}</div>
-              )}
+              {errors.password && <div className="form-error">{errors.password}</div>}
             </div>
 
-            <button
-              type="submit"
-              className="btn btn-primary"
-              disabled={isLoading}
-            >
-              {isLoading ? (
-                <>
-                  <span className="btn-spinner" />
-                  Signing in...
-                </>
-              ) : (
-                'Sign In →'
-              )}
+            <button type="submit" className="btn btn-primary" disabled={loading}>
+              {loading ? <><span className="btn-spinner" />Signing in...</> : 'Sign In'}
             </button>
           </form>
 
-          <div className="auth-divider">
-            <span className="auth-divider-text">new here?</span>
-          </div>
-
-          <Link to="/register" className="btn btn-ghost" style={{ width: '100%', textAlign: 'center' }}>
+          <div className="auth-divider"><span className="auth-divider-text">new to printmixbox?</span></div>
+          <Link to="/register" className="btn btn-ghost" style={{ width: '100%', marginTop: 0, height: 38, fontSize: 'var(--text-sm)' }}>
             Register your company
           </Link>
 
           <div className="auth-footer">
-            Need to verify?{' '}
-            <Link to="/verify" className="auth-link">Verify account</Link>
+            Your credentials are emailed after admin approval.
           </div>
         </div>
       </div>
     </div>
   );
-};
-
-export default Login;
+}
