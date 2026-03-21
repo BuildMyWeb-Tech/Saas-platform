@@ -34,32 +34,35 @@ export default function Dashboard() {
     <div className="dashboard-layout">
       <header className="topbar">
         <div className="topbar-left">
-          <div className="auth-logo-icon" style={{ width: 26, height: 26, fontSize: 13, borderRadius: 6 }}>🖨️</div>
+          <div className="auth-logo-icon" style={{ width: 26, height: 26, fontSize: 13, borderRadius: 6, flexShrink: 0 }}>🖨️</div>
           <span className="topbar-logo">PrintMixBox</span>
           <div className="topbar-divider" />
           <span className="topbar-company">{company?.companyCode}</span>
         </div>
         <div className="topbar-right">
-          <span className="topbar-user"><span>{user?.username}</span></span>
-          <span className="badge badge-blue" style={{ textTransform: 'capitalize' }}>{user?.role}</span>
+          <span className="topbar-user hidden-sm"><span>{user?.username}</span></span>
+          <span className="badge badge-blue hidden-sm" style={{ textTransform: 'capitalize' }}>{user?.role}</span>
           <button className="btn btn-ghost btn-sm" onClick={() => { logout(); navigate('/login'); }}>Sign out</button>
         </div>
       </header>
 
       <main className="dashboard-main">
-        <div style={{ marginBottom: 28 }}>
+        {/* Greeting */}
+        <div style={{ marginBottom: 24 }}>
           <h1 style={{ fontSize: 'var(--text-2xl)', fontWeight: 700, letterSpacing: '-0.5px', marginBottom: 4 }}>
             {greeting()}, {user?.username}
           </h1>
           <p style={{ fontSize: 'var(--text-sm)', color: 'var(--color-text-secondary)' }}>
-            {company?.companyName} &nbsp;·&nbsp; {(company?.plan || 'free').charAt(0).toUpperCase() + (company?.plan || 'free').slice(1)} plan
+            {company?.companyName}&nbsp;·&nbsp;
+            {(company?.plan || 'free').charAt(0).toUpperCase() + (company?.plan || 'free').slice(1)} plan
           </p>
         </div>
 
+        {/* Stats */}
         <div className="stats-grid">
           {STATS.map(s => (
             <div className="stat-card" key={s.label}>
-              <div style={{ fontSize: 18, marginBottom: 10 }}>{s.icon}</div>
+              <div style={{ fontSize: 18, marginBottom: 8 }}>{s.icon}</div>
               <div className="stat-value">{s.value}</div>
               <div className="stat-label">{s.label}</div>
               <div className="stat-sub">{s.sub}</div>
@@ -67,29 +70,27 @@ export default function Dashboard() {
           ))}
         </div>
 
+        {/* Company detail card */}
         <div className="card" style={{ marginBottom: 24 }}>
           <div className="card-header">
             <span className="card-title">Company Details</span>
             <span className="badge badge-green">● Verified</span>
           </div>
-          <div>
-            {[
-              { label: 'Company Name', value: company?.companyName },
-              { label: 'Company Code', value: company?.companyCode, mono: true },
-              { label: 'Username',     value: user?.username },
-              { label: 'Role',         value: user?.role, capitalize: true },
-              { label: 'Plan',         value: company?.plan || 'Free', capitalize: true },
-            ].map(r => (
-              <div className="info-row" key={r.label}>
-                <span className="info-row-label">{r.label}</span>
-                <span className={`info-row-value${r.mono ? ' mono' : ''}`} style={r.capitalize ? { textTransform: 'capitalize' } : {}}>
-                  {r.value}
-                </span>
-              </div>
-            ))}
-          </div>
+          {[
+            { label: 'Company Name', value: company?.companyName },
+            { label: 'Company Code', value: company?.companyCode, mono: true },
+            { label: 'Username',     value: user?.username },
+            { label: 'Role',         value: user?.role, cap: true },
+            { label: 'Plan',         value: company?.plan || 'Free', cap: true },
+          ].map(r => (
+            <div className="info-row" key={r.label}>
+              <span className="info-row-label">{r.label}</span>
+              <span className={`info-row-value${r.mono ? ' mono' : ''}`} style={r.cap ? { textTransform: 'capitalize' } : {}}>{r.value}</span>
+            </div>
+          ))}
         </div>
 
+        {/* Modules */}
         {/* <div className="section-header">
           <h2>Platform Modules</h2>
           <p>These modules are under development and will be available soon.</p>

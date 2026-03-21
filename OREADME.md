@@ -392,14 +392,3 @@ Authorization: Bearer <device_jwt>
 ## License
 
 MIT © PrintMixBox
-29ABCDE1234F1Z2
-Connected to MongoDB
-✅  Admin account created:
-    Username : superadmin
-    Password : Admin@1234
-
-
-Vdart: 
-COMP-3523
-vdart
-KCTech@123

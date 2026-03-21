@@ -9,10 +9,8 @@ const STATUS_BADGE = {
   rejected: <span className="badge badge-red">Rejected</span>,
 };
 
-const fmt = (d) => new Date(d).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' });
 const fmtDate = (d) => new Date(d).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' });
 
-// ── Confirm Modal ─────────────────────────────────────────────────────────────
 function ConfirmModal({ open, onClose, onConfirm, title, message, confirmLabel, confirmStyle = 'btn-danger', note, setNote, showNote }) {
   if (!open) return null;
   return (
@@ -25,11 +23,9 @@ function ConfirmModal({ open, onClose, onConfirm, title, message, confirmLabel, 
         <div className="modal-body">
           <p style={{ fontSize: 'var(--text-sm)', color: 'var(--color-text-secondary)', lineHeight: 1.6 }}>{message}</p>
           {showNote && (
-            <div style={{ marginTop: 16 }}>
+            <div style={{ marginTop: 14 }}>
               <label className="form-label">{showNote}</label>
-              <textarea
-                className="form-input" rows={3}
-                placeholder="Optional note..."
+              <textarea className="form-input" rows={3} placeholder="Optional note..."
                 value={note} onChange={e => setNote(e.target.value)}
                 style={{ height: 'auto', padding: '10px 12px', resize: 'vertical' }}
               />
@@ -45,7 +41,6 @@ function ConfirmModal({ open, onClose, onConfirm, title, message, confirmLabel, 
   );
 }
 
-// ── Main Companies Page ───────────────────────────────────────────────────────
 export default function Companies() {
   const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
@@ -61,9 +56,8 @@ export default function Companies() {
   const status = searchParams.get('status') || '';
   const page   = parseInt(searchParams.get('page') || '1');
 
-  // Modal state
-  const [modal, setModal]   = useState({ open: false, type: '', company: null });
-  const [note, setNote]     = useState('');
+  const [modal, setModal] = useState({ open: false, type: '', company: null });
+  const [note, setNote]   = useState('');
 
   const showToast = (msg) => { setToast(msg); setTimeout(() => setToast(''), 3500); };
 
@@ -73,15 +67,14 @@ export default function Companies() {
       const res = await getCompanies({ status, page, limit: 15, search: searchRef.current || '' });
       setCompanies(res.data.companies);
       setPag(res.data.pagination);
-    } catch { /* handled by interceptor */ }
+    } catch {}
     finally { setLoading(false); }
   }, [status, page]);
 
   useEffect(() => { load(); }, [load]);
 
-  // Search debounce
   const searchTimeout = useRef(null);
-  const onSearchChange = (e) => {
+  const onSearch = (e) => {
     const v = e.target.value;
     setSearch(v);
     searchRef.current = v;
@@ -96,14 +89,13 @@ export default function Companies() {
     setSearchParams(p);
   };
 
-  const openModal = (type, company) => { setModal({ open: true, type, company }); setNote(''); };
+  const openModal  = (type, company) => { setModal({ open: true, type, company }); setNote(''); };
   const closeModal = () => setModal({ open: false, type: '', company: null });
 
   const handleApprove = async () => {
-    const { company } = modal; closeModal();
-    setAL(company._id);
+    const { company } = modal; closeModal(); setAL(company._id);
     try {
-      const res = await approveCompany(company._id, note);
+      await approveCompany(company._id, note);
       showToast(`✅ ${company.companyName} approved — credentials sent to ${company.email}`);
       load();
     } catch (err) { showToast(`❌ ${err.response?.data?.message || 'Failed to approve.'}`); }
@@ -111,13 +103,12 @@ export default function Companies() {
   };
 
   const handleReject = async () => {
-    const { company } = modal; closeModal();
-    setAL(company._id);
+    const { company } = modal; closeModal(); setAL(company._id);
     try {
       await rejectCompany(company._id, note);
-      showToast(`Company rejected.`);
+      showToast('Company rejected.');
       load();
-    } catch (err) { showToast(`❌ ${err.response?.data?.message || 'Failed to reject.'}`); }
+    } catch (err) { showToast(`❌ ${err.response?.data?.message || 'Failed.'}`); }
     finally { setAL(null); }
   };
 
@@ -126,7 +117,7 @@ export default function Companies() {
     try {
       await resendCredentials(company._id);
       showToast(`📧 New credentials sent to ${company.email}`);
-    } catch (err) { showToast(`❌ ${err.response?.data?.message || 'Failed to resend.'}`); }
+    } catch (err) { showToast(`❌ ${err.response?.data?.message || 'Failed.'}`); }
     finally { setAL(null); }
   };
 
@@ -141,41 +132,31 @@ export default function Companies() {
     <div>
       {/* Toast */}
       {toast && (
-        <div style={{ position: 'fixed', top: 20, right: 20, zIndex: 9999, background: '#1e293b', color: '#fff', padding: '12px 18px', borderRadius: 'var(--radius-lg)', fontSize: 'var(--text-sm)', boxShadow: 'var(--shadow-lg)', maxWidth: 400, lineHeight: 1.5, animation: 'fadeInUp 0.2s ease' }}>
+        <div style={{ position: 'fixed', top: 16, right: 16, zIndex: 9999, background: '#1e293b', color: '#fff', padding: '12px 16px', borderRadius: 'var(--radius-lg)', fontSize: 'var(--text-sm)', boxShadow: 'var(--shadow-lg)', maxWidth: 'min(400px, calc(100vw - 32px))', lineHeight: 1.5, animation: 'fadeInUp 0.2s ease' }}>
           {toast}
         </div>
       )}
 
-      {/* Modals */}
       <ConfirmModal
-        open={modal.open && modal.type === 'approve'}
-        onClose={closeModal} onConfirm={handleApprove}
+        open={modal.open && modal.type === 'approve'} onClose={closeModal} onConfirm={handleApprove}
         title="Approve Company"
-        message={`Approve ${modal.company?.companyName}? A company code will be generated and login credentials will be emailed to ${modal.company?.email}.`}
-        confirmLabel="Approve & Send Credentials"
-        confirmStyle="btn-success"
-        showNote="Admin note (optional)"
-        note={note} setNote={setNote}
+        message={`Approve ${modal.company?.companyName}? A company code will be generated and login credentials emailed to ${modal.company?.email}.`}
+        confirmLabel="Approve & Send Credentials" confirmStyle="btn-success"
+        showNote="Admin note (optional)" note={note} setNote={setNote}
       />
       <ConfirmModal
-        open={modal.open && modal.type === 'reject'}
-        onClose={closeModal} onConfirm={handleReject}
+        open={modal.open && modal.type === 'reject'} onClose={closeModal} onConfirm={handleReject}
         title="Reject Company"
-        message={`Reject ${modal.company?.companyName}? This will mark the application as rejected.`}
-        confirmLabel="Reject"
-        confirmStyle="btn-danger"
-        showNote="Reason for rejection (optional)"
-        note={note} setNote={setNote}
+        message={`Reject ${modal.company?.companyName}?`}
+        confirmLabel="Reject" confirmStyle="btn-danger"
+        showNote="Reason (optional)" note={note} setNote={setNote}
       />
 
       {/* Filter bar */}
       <div className="filter-bar">
         <div className="search-input-wrap">
           <span className="search-icon">🔍</span>
-          <input
-            type="text" placeholder="Search by name, email, GST, code…"
-            value={search} onChange={onSearchChange}
-          />
+          <input type="text" placeholder="Search name, email, GST, code…" value={search} onChange={onSearch} />
         </div>
         <div className="filter-tabs">
           {TABS.map(t => (
@@ -216,38 +197,25 @@ export default function Companies() {
                 const busy = actionLoading === c._id;
                 return (
                   <tr key={c._id}>
-                    <td>
-                      <div style={{ fontWeight: 'var(--weight-medium)' }}>{c.companyName}</div>
-                    </td>
-                    <td className="mono">{c.gstNumber}</td>
-                    <td style={{ color: 'var(--color-text-secondary)' }}>{c.email}</td>
-                    <td className="mono">{c.companyCode || <span style={{ color: 'var(--color-text-tertiary)' }}>—</span>}</td>
-                    <td>{STATUS_BADGE[c.status]}</td>
-                    <td style={{ color: 'var(--color-text-secondary)', fontSize: 'var(--text-xs)', whiteSpace: 'nowrap' }}>{fmtDate(c.createdAt)}</td>
-                    <td>
+                    <td data-label="Company" style={{ fontWeight: 'var(--weight-medium)' }}>{c.companyName}</td>
+                    <td data-label="GST" className="mono">{c.gstNumber}</td>
+                    <td data-label="Email" style={{ color: 'var(--color-text-secondary)' }}>{c.email}</td>
+                    <td data-label="Code" className="mono">{c.companyCode || '—'}</td>
+                    <td data-label="Status">{STATUS_BADGE[c.status]}</td>
+                    <td data-label="Registered" style={{ color: 'var(--color-text-secondary)', fontSize: 'var(--text-xs)', whiteSpace: 'nowrap' }}>{fmtDate(c.createdAt)}</td>
+                    <td data-label="Actions">
                       <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
-                        {/* Detail */}
-                        <button className="btn btn-ghost btn-sm" onClick={() => navigate(`/admin/companies/${c._id}`)}>
-                          View
-                        </button>
-
-                        {/* Pending → approve or reject */}
+                        <button className="btn btn-ghost btn-sm" onClick={() => navigate(`/admin/companies/${c._id}`)}>View</button>
                         {c.status === 'pending' && (
                           <>
                             <button className="btn btn-success btn-sm" disabled={busy} onClick={() => openModal('approve', c)}>
-                              {busy ? <span className="btn-spinner" /> : 'Approve'}
+                              {busy ? <span className="btn-spinner" /> : '✓ Approve'}
                             </button>
-                            <button className="btn btn-danger btn-sm" disabled={busy} onClick={() => openModal('reject', c)}>
-                              Reject
-                            </button>
+                            <button className="btn btn-danger btn-sm" disabled={busy} onClick={() => openModal('reject', c)}>Reject</button>
                           </>
                         )}
-
-                        {/* Approved → resend credentials */}
                         {c.status === 'approved' && (
-                          <button className="btn btn-ghost btn-sm" disabled={busy} onClick={() => handleResend(c)}
-                            title="Send new credentials email"
-                          >
+                          <button className="btn btn-ghost btn-sm" disabled={busy} onClick={() => handleResend(c)} title="Resend credentials">
                             {busy ? <span className="btn-spinner btn-spinner-dark" /> : '📧 Resend'}
                           </button>
                         )}
@@ -263,17 +231,14 @@ export default function Companies() {
 
       {/* Pagination */}
       {pagination.totalPages > 1 && (
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginTop: 16, fontSize: 'var(--text-sm)', color: 'var(--color-text-secondary)' }}>
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginTop: 14, fontSize: 'var(--text-sm)', color: 'var(--color-text-secondary)', flexWrap: 'wrap', gap: 10 }}>
           <span>{pagination.total} companies total</span>
-          <div style={{ display: 'flex', gap: 6 }}>
+          <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
             {Array.from({ length: pagination.totalPages }, (_, i) => i + 1).map(p => (
               <button key={p}
                 className={`btn btn-sm ${p === page ? 'btn-primary' : 'btn-ghost'}`}
                 style={{ width: 32, padding: 0 }}
-                onClick={() => {
-                  const sp = new URLSearchParams(searchParams);
-                  sp.set('page', p); setSearchParams(sp);
-                }}
+                onClick={() => { const sp = new URLSearchParams(searchParams); sp.set('page', p); setSearchParams(sp); }}
               >
                 {p}
               </button>
