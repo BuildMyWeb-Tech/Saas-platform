@@ -25,8 +25,9 @@ const allowedOrigins = [
   process.env.FRONTEND_URL  || 'http://localhost:5173',
   process.env.ADMIN_URL     || 'http://localhost:5173',
   'http://localhost:3000',
-  'https://printmixbox.vercel.app',
+  'https://printmixbox.vercel.app','https://saas-platform-lyart.vercel.app',
 ];
+
 app.use(cors({
   origin: (origin, cb) => {
     if (!origin || allowedOrigins.includes(origin)) return cb(null, true);
@@ -48,6 +49,9 @@ app.get('/health', (_, res) => res.json({ success: true, message: 'PrintMixBox A
 // Routes
 app.use('/api/auth',  authRoutes);
 app.use('/api/admin', adminRoutes);
+app.get("/", (req, res) => {
+  res.send("🚀 PrintMixBox API is running...");
+});
 
 // Errors
 app.use(notFound);
