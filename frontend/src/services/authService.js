@@ -1,10 +1,14 @@
 // src/services/authService.js
 import axios from 'axios';
 
+// In production (Vercel) VITE_API_URL is set to the Render backend URL.
+// In local dev it's empty, so Vite proxy handles /api → localhost:5000.
+const BASE = import.meta.env.VITE_API_URL || '/api';
+
 const api = axios.create({
-  baseURL: '/api',
+  baseURL: BASE,
   headers: { 'Content-Type': 'application/json' },
-  timeout: 15000,
+  timeout: 20000,
 });
 
 api.interceptors.request.use((config) => {
@@ -25,11 +29,7 @@ api.interceptors.response.use(
   }
 );
 
-export const registerCompany = async (data) => {
-  const r = await api.post('/auth/register', data);
-  return r.data;
-};
-
+export const registerCompany = async (data) => (await api.post('/auth/register', data)).data;
 export const loginUser = async (data) => {
   const r = await api.post('/auth/login', data);
   if (r.data.success) {
@@ -38,27 +38,17 @@ export const loginUser = async (data) => {
   }
   return r.data;
 };
-
-export const changePassword = async (data) => {
-  const r = await api.post('/auth/change-password', data);
-  return r.data;
-};
-
-export const getMe = async () => {
-  const r = await api.get('/auth/me');
-  return r.data;
-};
-
-export const logout = () => {
+export const changePassword = async (data) => (await api.post('/auth/change-password', data)).data;
+export const getMe          = async ()      => (await api.get('/auth/me')).data;
+export const logout         = ()            => {
   localStorage.removeItem('pmb_token');
   localStorage.removeItem('pmb_auth');
 };
-
-export const getStoredAuth = () => {
+export const getStoredAuth  = () => {
   try {
-    const raw   = localStorage.getItem('pmb_auth');
-    const token = localStorage.getItem('pmb_token');
-    if (!raw || !token) return null;
+    const raw = localStorage.getItem('pmb_auth');
+    const tok = localStorage.getItem('pmb_token');
+    if (!raw || !tok) return null;
     return JSON.parse(raw);
   } catch { return null; }
 };

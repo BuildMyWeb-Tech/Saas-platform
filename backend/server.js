@@ -1,13 +1,12 @@
-// server.js
 require('dotenv').config();
 
-const express    = require('express');
-const cors       = require('cors');
-const helmet     = require('helmet');
-const morgan     = require('morgan');
-const rateLimit  = require('express-rate-limit');
+const express   = require('express');
+const cors      = require('cors');
+const helmet    = require('helmet');
+const morgan    = require('morgan');
+const rateLimit = require('express-rate-limit');
 
-const connectDB  = require('./config/db');
+const connectDB   = require('./config/db');
 const authRoutes  = require('./routes/authRoutes');
 const adminRoutes = require('./routes/adminRoutes');
 const { notFound, errorHandler } = require('./middleware/errorMiddleware');
@@ -18,52 +17,61 @@ const PORT = process.env.PORT || 5000;
 
 connectDB();
 
-// Security
+// Trust proxy — required for Render / AWS load balancers
+app.set('trust proxy', 1);
+
 app.use(helmet({ crossOriginResourcePolicy: { policy: 'cross-origin' } }));
 
-const allowedOrigins = [
-  process.env.FRONTEND_URL  || 'http://localhost:5173',
-  process.env.ADMIN_URL     || 'http://localhost:5173',
-  'http://localhost:3000',
-  'https://printmixbox.vercel.app','https://saas-platform-lyart.vercel.app',
-];
+// Dynamic CORS — reads from env vars
+const getAllowedOrigins = () => {
+  const list = ['http://localhost:5173', 'http://localhost:3000'];
+  if (process.env.FRONTEND_URL) list.push(process.env.FRONTEND_URL.trim());
+  if (process.env.EXTRA_ORIGINS)
+    process.env.EXTRA_ORIGINS.split(',').forEach(o => list.push(o.trim()));
+  return list;
+};
 
 app.use(cors({
   origin: (origin, cb) => {
-    if (!origin || allowedOrigins.includes(origin)) return cb(null, true);
-    cb(new Error(`CORS: origin ${origin} not allowed`));
+    if (!origin) return cb(null, true);
+    // Allow all *.vercel.app preview URLs
+    if (/^https:\/\/[a-z0-9-]+(\.vercel\.app)$/.test(origin)) return cb(null, true);
+    if (getAllowedOrigins().includes(origin)) return cb(null, true);
+    cb(new Error(`CORS: ${origin} not allowed`));
   },
-  credentials:    true,
-  methods:        ['GET','POST','PUT','PATCH','DELETE','OPTIONS'],
+  credentials: true,
+  methods: ['GET','POST','PUT','PATCH','DELETE','OPTIONS'],
   allowedHeaders: ['Content-Type','Authorization'],
 }));
 
 app.use(rateLimit({ windowMs: 15*60*1000, max: 200, standardHeaders: true, legacyHeaders: false }));
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true }));
-if (process.env.NODE_ENV !== 'test') app.use(morgan('dev'));
+if (process.env.NODE_ENV !== 'test') app.use(morgan(process.env.NODE_ENV === 'production' ? 'combined' : 'dev'));
 
-// Health
-app.get('/health', (_, res) => res.json({ success: true, message: 'PrintMixBox API running', ts: new Date() }));
+// Health check — Render uses this for zero-downtime deploys
+app.get('/health', (_, res) => res.json({
+  success: true, status: 'healthy',
+  service: 'PrintMixBox API', env: process.env.NODE_ENV, ts: new Date().toISOString(),
+}));
 
-// Routes
 app.use('/api/auth',  authRoutes);
 app.use('/api/admin', adminRoutes);
-app.get("/", (req, res) => {
-  res.send("🚀 PrintMixBox API is running...");
-});
-
-// Errors
 app.use(notFound);
 app.use(errorHandler);
 
 const server = app.listen(PORT, async () => {
-  console.log(`\n🖨️  PrintMixBox API  →  http://localhost:${PORT}  [${process.env.NODE_ENV || 'development'}]\n`);
+  console.log(`\n🖨️  PrintMixBox API → port ${PORT} [${process.env.NODE_ENV || 'dev'}]\n`);
   await verifyEmailConnection();
 });
 
-process.on('SIGTERM', () => server.close(() => process.exit(0)));
-process.on('SIGINT',  () => server.close(() => process.exit(0)));
-process.on('unhandledRejection', err => { console.error(err); server.close(() => process.exit(1)); });
+const shutdown = (sig) => {
+  console.log(`${sig} — closing server`);
+  server.close(() => process.exit(0));
+  setTimeout(() => process.exit(1), 10_000);
+};
+process.on('SIGTERM', () => shutdown('SIGTERM'));
+process.on('SIGINT',  () => shutdown('SIGINT'));
+process.on('unhandledRejection', (e) => { console.error(e); server.close(() => process.exit(1)); });
 
 module.exports = app;
