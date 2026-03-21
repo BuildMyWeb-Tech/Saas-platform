@@ -853,6 +853,12 @@ td.mono { font-family: var(--font-mono); font-size: var(--text-xs); letter-spaci
    ADMIN LAYOUT — SIDEBAR
    ══════════════════════════════════════════════════════════════ */
 
+/* ══════════════════════════════════════════════════════════════
+   ADMIN LAYOUT — SINGLE SIDEBAR, RESPONSIVE
+   Desktop  (>1024px) : sidebar is sticky in grid column
+   Mobile/Tablet (≤1024px) : sidebar is a slide-in drawer
+   ══════════════════════════════════════════════════════════════ */
+
 .admin-layout {
   display: grid;
   grid-template-columns: var(--sidebar-width) 1fr;
@@ -860,37 +866,56 @@ td.mono { font-family: var(--font-mono); font-size: var(--text-xs); letter-spaci
   background: var(--color-bg);
 }
 
-@media (max-width: 1024px) {
-  .admin-layout { grid-template-columns: 1fr; }
-  .sidebar { display: none; }
-}
-
-/* Mobile sidebar overlay (toggled with JS) */
+/* ── Overlay (mobile only, rendered conditionally in JS) ── */
 .sidebar-overlay {
   display: none;
   position: fixed; inset: 0;
-  background: rgba(0,0,0,0.5); z-index: 200;
+  background: rgba(0,0,0,0.5);
+  z-index: 200;
 }
 .sidebar-overlay.open { display: block; }
 
+/* ── Sidebar base styles ── */
 .sidebar {
-  background: var(--sidebar-bg); display: flex; flex-direction: column;
-  position: sticky; top: 0; height: 100vh;
-  overflow-y: auto; border-right: 1px solid var(--sidebar-border);
+  background: var(--sidebar-bg);
+  display: flex;
+  flex-direction: column;
+  border-right: 1px solid var(--sidebar-border);
+  overflow-y: auto;
   z-index: 201;
+  /* Desktop: sticky in grid flow */
+  position: sticky;
+  top: 0;
+  height: 100vh;
 }
 
-/* Mobile: sidebar slides in from left */
+/* ── Tablet / Mobile ≤ 1024px: sidebar becomes a slide-in drawer ── */
 @media (max-width: 1024px) {
-  .sidebar {
-    display: flex;
-    position: fixed; left: 0; top: 0; bottom: 0;
-    width: var(--sidebar-width);
-    transform: translateX(-100%);
-    transition: transform 0.25s ease;
-    z-index: 201;
+  /* Collapse the grid column so main takes full width */
+  .admin-layout {
+    grid-template-columns: 1fr;
   }
-  .sidebar.open { transform: translateX(0); }
+
+  /* Take sidebar out of grid flow, position as a fixed drawer */
+  .sidebar {
+    position: fixed;
+    left: 0;
+    top: 0;
+    bottom: 0;
+    width: var(--sidebar-width);
+    height: 100vh;
+    /* Hidden by default — slides in when .open is added */
+    transform: translateX(-100%);
+    transition: transform 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+    /* Sits above everything including the topbar */
+    z-index: 300;
+    box-shadow: none;
+  }
+
+  .sidebar.open {
+    transform: translateX(0);
+    box-shadow: 4px 0 24px rgba(0, 0, 0, 0.3);
+  }
 }
 
 .sidebar-header {
