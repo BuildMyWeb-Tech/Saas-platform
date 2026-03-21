@@ -9,9 +9,19 @@ export default defineConfig({
     chunkSizeWarningLimit: 600,
     rollupOptions: {
       output: {
-        manualChunks: {
-          vendor: ['react','react-dom','react-router-dom'],
-          http:   ['axios'],
+        manualChunks(id) {
+          // Put all node_modules packages in 'vendor' chunk
+          if (id.includes('node_modules')) {
+            if (id.includes('axios')) return 'http'; // axios goes to 'http' chunk
+            if (
+              id.includes('react') ||
+              id.includes('react-dom') ||
+              id.includes('react-router-dom')
+            ) {
+              return 'vendor'; // react packages go to 'vendor'
+            }
+            return 'vendor'; // everything else in node_modules
+          }
         },
       },
     },
