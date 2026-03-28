@@ -11,14 +11,19 @@ const config = {
     encrypt: false,
     trustServerCertificate: true,
   },
+  connectionTimeout: 30000,
+  requestTimeout: 30000,
 };
 
 const poolPromise = new sql.ConnectionPool(config)
   .connect()
   .then(pool => {
-    console.log("SQL Connected");
+    console.log("✅ SQL Connected");
     return pool;
   })
-  .catch(err => console.log("DB Error", err));
+  .catch(err => {
+    console.error("❌ DB Connection Failed:", err.message);
+    throw err; // 🔥 VERY IMPORTANT FIX
+  });
 
 module.exports = { sql, poolPromise };

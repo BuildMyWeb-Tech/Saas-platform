@@ -26,29 +26,32 @@ exports.login = async (req, res, next) => {
     });
 
   } catch (err) {
-    next(err);
+    console.error("🔥 LOGIN ERROR:", err); // ✅ ADD THIS
+    return res.status(500).json({
+      success: false,
+      message: err.message || "Internal Server Error"
+    });
   }
 };
 
-// REGISTER (temporary stub if not implemented yet)
+
+// TEMP APIs
 exports.register = async (req, res) => {
-  return res.json({
+  res.json({
     success: true,
-    message: "Register API working (implement service logic)"
+    message: "Register API working"
   });
 };
 
-// CHANGE PASSWORD (temporary stub)
 exports.changePassword = async (req, res) => {
-  return res.json({
+  res.json({
     success: true,
     message: "Change password API working"
   });
 };
 
-// GET ME (temporary stub)
 exports.getMe = async (req, res) => {
-  return res.json({
+  res.json({
     success: true,
     message: "GetMe API working"
   });

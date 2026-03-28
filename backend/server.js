@@ -24,7 +24,7 @@ app.use(helmet({ crossOriginResourcePolicy: { policy: 'cross-origin' } }));
 
 // Dynamic CORS — reads from env vars
 const getAllowedOrigins = () => {
-  const list = ['http://localhost:5173', 'http://localhost:3000'];
+  const list = ['http://localhost:5173', 'http://localhost:3000','https://saas-platform-lyart.vercel.app'];
   if (process.env.FRONTEND_URL) list.push(process.env.FRONTEND_URL.trim());
   if (process.env.EXTRA_ORIGINS)
     process.env.EXTRA_ORIGINS.split(',').forEach(o => list.push(o.trim()));
