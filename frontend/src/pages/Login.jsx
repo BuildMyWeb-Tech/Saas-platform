@@ -1,20 +1,18 @@
 // src/pages/Login.jsx
 import React, { useState, useEffect } from 'react';
-import { Link, useNavigate, useLocation, useSearchParams } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import { loginUser } from '../services/authService';
 import { useAuth } from '../context/AuthContext';
 
 export default function Login() {
   const navigate = useNavigate();
-  const location = useLocation();
-  const [params]  = useSearchParams();
+  const [params] = useSearchParams();
   const { login, isAuthenticated } = useAuth();
 
-  const [form, setForm]          = useState({ companyCode: '', username: '', password: '' });
+  const [form, setForm]          = useState({ username: '', password: '' });
   const [errors, setErrors]      = useState({});
   const [serverError, setServer] = useState('');
   const [sessionMsg, setSession] = useState('');
-  const [pendingMsg, setPending] = useState('');
   const [showPw, setShowPw]      = useState(false);
   const [loading, setLoading]    = useState(false);
 
@@ -27,213 +25,179 @@ export default function Login() {
       setSession('Your session expired. Please sign in again.');
   }, [params]);
 
-  const from = location.state?.from?.pathname || '/dashboard';
-
   const onChange = (e) => {
     const { name, value } = e.target;
     setForm(p => ({ ...p, [name]: value }));
     if (errors[name]) setErrors(p => ({ ...p, [name]: '' }));
     if (serverError)  setServer('');
-    setPending('');
   };
 
   const validate = () => {
     const e = {};
-    if (!form.companyCode.trim()) e.companyCode = 'Required';
-    if (!form.username.trim())    e.username    = 'Required';
-    if (!form.password)           e.password    = 'Required';
+    if (!form.username.trim()) e.username = 'Username is required';
+    if (!form.password)        e.password = 'Password is required';
     return e;
   };
 
   const onSubmit = async (e) => {
     e.preventDefault();
-    setServer(''); setPending('');
+    setServer('');
     const errs = validate();
     if (Object.keys(errs).length) { setErrors(errs); return; }
     setLoading(true);
     try {
-      const res = await loginUser({
-        companyCode: form.companyCode.trim().toUpperCase(),
-        username:    form.username.trim().toLowerCase(),
-        password:    form.password,
-      });
-      if (res.success) { login(res.data); navigate(from, { replace: true }); }
+      const res = await loginUser({ username: form.username.trim(), password: form.password });
+      if (res.success) {
+        login({ userId: res.data.userId, username: form.username.trim() });
+        navigate('/dashboard', { replace: true });
+      } else {
+        setServer('Invalid username or password.');
+      }
     } catch (err) {
-      const d = err.response?.data;
-      if (d?.status === 'pending')  { setPending(d.message); return; }
-      if (d?.status === 'rejected') { setServer(d.message); return; }
-      setServer(d?.message || 'Invalid credentials. Please try again.');
+      const msg = err.response?.data?.message || err.response?.data?.error || 'Login failed. Please try again.';
+      setServer(msg);
     } finally { setLoading(false); }
   };
 
   return (
-    <div className="auth-layout">
-
-      {/* ── Left info panel (hidden on tablet/mobile via CSS) ── */}
-      <div className="auth-panel-left">
-        <div className="panel-brand">
-          <div className="panel-brand-logo">
-            <div className="auth-logo-icon" style={{ width: 28, height: 28, fontSize: 14 }}>🖨️</div>
-            <span className="panel-brand-name">PrintMixBox</span>
-          </div>
-          <h2 className="panel-headline">
-            Your printing<br /><em>command center</em>
-          </h2>
-          <p className="panel-description">
-            Sign in to manage IoT printers, dispatch branding jobs, and monitor
-            your fleet in real-time.
-          </p>
-        </div>
-
-        <div className="panel-features">
-          {[
-            { icon: '🔐', title: 'Company-isolated access',  desc: 'Secure per-tenant workspace with RBAC' },
-            { icon: '⚡', title: 'Real-time job queue',      desc: 'Instant print dispatching and tracking' },
-            { icon: '🌐', title: 'Multi-device support',     desc: 'Manage any printer from anywhere' },
-            { icon: '📦', title: 'Box branding engine',      desc: 'Pixel-perfect brand output at scale' },
-          ].map(f => (
-            <div className="panel-feature" key={f.title}>
-              <div className="panel-feature-icon">{f.icon}</div>
-              <div className="panel-feature-text">
-                <h4>{f.title}</h4>
-                <p>{f.desc}</p>
-              </div>
+    <div className="login-page">
+      {/* Left brand panel */}
+      <div className="login-brand">
+        <div className="login-brand-inner">
+          <div className="login-logo">
+            <div className="login-logo-icon">
+              <svg width="28" height="28" viewBox="0 0 28 28" fill="none">
+                <rect width="28" height="28" rx="6" fill="white" fillOpacity="0.15"/>
+                <path d="M7 8h14M7 14h10M7 20h12" stroke="white" strokeWidth="2" strokeLinecap="round"/>
+              </svg>
             </div>
-          ))}
+            <span className="login-logo-text">Mr. Press Management</span>
+          </div>
+
+          <div className="login-brand-content">
+            <h1 className="login-brand-headline">
+              Streamline your<br />
+              <span>press operations</span>
+            </h1>
+            <p className="login-brand-desc">
+              Manage job cards, process planning, pre-press to post-press
+              workflows, and logistics — all in one platform.
+            </p>
+          </div>
+
+          <div className="login-brand-features">
+            {[
+              { icon: '🖨️', label: 'Press & Pre-Press Management' },
+              { icon: '📋', label: 'Job Card & Process Planning' },
+              { icon: '🚚', label: 'Courier Booking & Tracking' },
+              { icon: '👥', label: 'User & Department Control' },
+            ].map(f => (
+              <div className="login-feature-item" key={f.label}>
+                <span className="login-feature-icon">{f.icon}</span>
+                <span className="login-feature-label">{f.label}</span>
+              </div>
+            ))}
+          </div>
         </div>
       </div>
 
-      {/* ── Right form panel ── */}
-      <div className="auth-panel-right">
-        <div className="auth-card">
+      {/* Right form panel */}
+      <div className="login-form-panel">
+        <div className="login-form-card">
 
-          {/* Logo */}
-          <div className="auth-logo">
-            <div className="auth-logo-icon">🖨️</div>
-            <span className="auth-logo-text">PrintMixBox</span>
+          {/* Mobile logo */}
+          <div className="login-mobile-logo">
+            <div className="login-logo-icon-sm">
+              <svg width="20" height="20" viewBox="0 0 28 28" fill="none">
+                <path d="M7 8h14M7 14h10M7 20h12" stroke="white" strokeWidth="2.5" strokeLinecap="round"/>
+              </svg>
+            </div>
+            <span>Mr. Press Management</span>
           </div>
 
-          {/* Heading */}
-          <div className="auth-card-header">
-            <h1 className="auth-title">Welcome back</h1>
-            <p className="auth-subtitle">Sign in with your company credentials</p>
+          <div className="login-form-header">
+            <h2>Welcome back</h2>
+            <p>Sign in to your account to continue</p>
           </div>
 
-          {/* Status alerts */}
           {sessionMsg && (
-            <div className="alert alert-info">{sessionMsg}</div>
-          )}
-          {pendingMsg && (
-            <div className="alert alert-warning">
-              <span>⏳</span>
-              <span>{pendingMsg}</span>
+            <div className="login-alert login-alert-info">
+              <span>🕐</span> {sessionMsg}
             </div>
           )}
           {serverError && (
-            <div className="alert alert-error">{serverError}</div>
+            <div className="login-alert login-alert-error">
+              <span>⚠</span> {serverError}
+            </div>
           )}
 
-          <form onSubmit={onSubmit} noValidate>
-
-            {/* Company Code */}
-            <div className="form-group">
-              <label className="form-label">Company Code</label>
-              <input
-                type="text"
-                name="companyCode"
-                className={`form-input form-input-mono ${errors.companyCode ? 'error' : ''}`}
-                placeholder="COMP-4829"
-                value={form.companyCode}
-                onChange={e => onChange({ target: { name: 'companyCode', value: e.target.value.toUpperCase() } })}
-                maxLength={9}
-                autoComplete="off"
-                autoFocus
-                autoCapitalize="characters"
-              />
-              {errors.companyCode
-                ? <div className="form-error">{errors.companyCode}</div>
-                : <div className="form-hint">Sent to you in the credentials email</div>
-              }
-            </div>
-
-            {/* Username */}
-            <div className="form-group">
-              <label className="form-label">Username</label>
+          <form onSubmit={onSubmit} noValidate autoComplete="on">
+            <div className="login-field">
+              <label className="login-label">Username</label>
               <input
                 type="text"
                 name="username"
-                className={`form-input ${errors.username ? 'error' : ''}`}
-                placeholder="your_username"
+                className={`login-input ${errors.username ? 'error' : ''}`}
+                placeholder="Enter your username"
                 value={form.username}
                 onChange={onChange}
                 autoComplete="username"
                 autoCapitalize="none"
                 spellCheck="false"
+                autoFocus
               />
-              {errors.username && (
-                <div className="form-error">{errors.username}</div>
-              )}
+              {errors.username && <div className="login-field-error">{errors.username}</div>}
             </div>
 
-            {/* Password */}
-            <div className="form-group">
-              <label className="form-label">Password</label>
-              <div style={{ position: 'relative' }}>
+            <div className="login-field">
+              <label className="login-label">Password</label>
+              <div className="login-input-wrap">
                 <input
                   type={showPw ? 'text' : 'password'}
                   name="password"
-                  className={`form-input ${errors.password ? 'error' : ''}`}
+                  className={`login-input ${errors.password ? 'error' : ''}`}
                   placeholder="Enter your password"
                   value={form.password}
                   onChange={onChange}
                   autoComplete="current-password"
-                  style={{ paddingRight: 44 }}
                 />
                 <button
                   type="button"
+                  className="login-pw-toggle"
                   onClick={() => setShowPw(s => !s)}
                   aria-label={showPw ? 'Hide password' : 'Show password'}
-                  style={{
-                    position: 'absolute', right: 10, top: '50%',
-                    transform: 'translateY(-50%)',
-                    background: 'none', border: 'none',
-                    cursor: 'pointer', color: 'var(--color-text-tertiary)',
-                    padding: 6, fontSize: 15, lineHeight: 1,
-                    display: 'flex', alignItems: 'center',
-                    minWidth: 32, minHeight: 32, justifyContent: 'center',
-                  }}
+                  tabIndex={-1}
                 >
-                  {showPw ? '🙈' : '👁️'}
+                  {showPw ? (
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
+                      <path d="M17.94 17.94A10.07 10.07 0 0112 20c-7 0-11-8-11-8a18.45 18.45 0 015.06-5.94"/>
+                      <path d="M9.9 4.24A9.12 9.12 0 0112 4c7 0 11 8 11 8a18.5 18.5 0 01-2.16 3.19"/>
+                      <line x1="1" y1="1" x2="23" y2="23"/>
+                    </svg>
+                  ) : (
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
+                      <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/>
+                      <circle cx="12" cy="12" r="3"/>
+                    </svg>
+                  )}
                 </button>
               </div>
-              {errors.password && (
-                <div className="form-error">{errors.password}</div>
-              )}
+              {errors.password && <div className="login-field-error">{errors.password}</div>}
             </div>
 
-            <button type="submit" className="btn btn-primary" disabled={loading}>
-              {loading
-                ? <><span className="btn-spinner" />Signing in...</>
-                : 'Sign In'
-              }
+            <button type="submit" className="login-submit-btn" disabled={loading}>
+              {loading ? (
+                <>
+                  <span className="login-btn-spinner" />
+                  Signing in...
+                </>
+              ) : 'Sign In'}
             </button>
           </form>
 
-          <div className="auth-divider">
-            <span className="auth-divider-text">new to printmixbox?</span>
-          </div>
-
-          <Link
-            to="/register"
-            className="btn btn-ghost"
-            style={{ width: '100%', height: 40, fontSize: 'var(--text-sm)' }}
-          >
-            Register your company
-          </Link>
-
-          <div className="auth-footer">
-            Your credentials are emailed after admin approval.
-          </div>
+          <p className="login-footer-note">
+            Mr. Press Management System &copy; {new Date().getFullYear()}
+          </p>
         </div>
       </div>
     </div>

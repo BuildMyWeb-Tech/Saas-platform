@@ -19,9 +19,7 @@ adminApi.interceptors.response.use(
   r => r,
   err => {
     if (err.response?.status === 401 && err.config?.url !== '/auth/login') {
-      localStorage.removeItem('pmb_admin_token');
-      localStorage.removeItem('pmb_admin');
-      window.location.href = '/admin/login?reason=session_expired';
+       console.warn("Unauthorized API call");
     }
     return Promise.reject(err);
   }

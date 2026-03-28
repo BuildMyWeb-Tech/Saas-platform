@@ -1,64 +1,71 @@
 // src/App.jsx
 import React from 'react';
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
+import { AuthProvider } from './context/AuthContext';
+import PrivateRoute      from './components/PrivateRoute';
+import AppLayout         from './components/AppLayout';
+import Login             from './pages/Login';
+import Dashboard         from './pages/Dashboard';
+import PlaceholderPage   from './pages/PlaceholderPage';
 
-// Contexts
-import { AuthProvider }      from './context/AuthContext';
-import { AdminAuthProvider } from './context/AdminAuthContext';
-
-// Route guards
-import { PrivateRoute, AdminRoute } from './components/PrivateRoute';
-
-// Company portal pages
-import Register       from './pages/Register';
-import Login          from './pages/Login';
-import Dashboard      from './pages/Dashboard';
-import ChangePassword from './pages/ChangePassword';
-
-// Admin panel pages
-import AdminLogin     from './pages/admin/AdminLogin';
-import AdminLayout    from './pages/admin/AdminLayout';
-import AdminDashboard from './pages/admin/AdminDashboard';
-import Companies      from './pages/admin/Companies';
-import CompanyDetail  from './pages/admin/CompanyDetail';
+// Helper to build placeholder routes for a section
+const ph = (section, subs) => subs.map(sub => (
+  <Route
+    key={`${section}/${sub}`}
+    path={`/${section}/${sub}`}
+    element={<PlaceholderPage />}
+  />
+));
 
 export default function App() {
   return (
     <BrowserRouter>
-      <AdminAuthProvider>
-        <AuthProvider>
-          <Routes>
+      <AuthProvider>
+        <Routes>
 
-            {/* ── Company Portal ─────────────────────────── */}
-            <Route path="/register" element={<Register />} />
-            <Route path="/login"    element={<Login />} />
+          {/* Public */}
+          <Route path="/login" element={<Login />} />
 
-            <Route path="/dashboard" element={
-              <PrivateRoute><Dashboard /></PrivateRoute>
-            } />
+          {/* Protected — all behind AppLayout */}
+          <Route path="/" element={
+            <PrivateRoute>
+              <AppLayout />
+            </PrivateRoute>
+          }>
+            <Route index element={<Navigate to="/dashboard" replace />} />
+            <Route path="dashboard" element={<Dashboard />} />
 
-            <Route path="/change-password" element={
-              <PrivateRoute><ChangePassword /></PrivateRoute>
-            } />
+            {/* Setup */}
+            {ph('setup', ['department','designation','employees','machines','process','customers'])}
 
-            {/* ── Admin Panel ───────────────────────────── */}
-            <Route path="/admin/login" element={<AdminLogin />} />
+            {/* Planning */}
+            {ph('planning', ['job-card','process-planning'])}
 
-            <Route path="/admin" element={
-              <AdminRoute><AdminLayout /></AdminRoute>
-            }>
-              <Route index          element={<AdminDashboard />} />
-              <Route path="companies"     element={<Companies />} />
-              <Route path="companies/:id" element={<CompanyDetail />} />
-            </Route>
+            {/* Pre Press */}
+            {ph('pre-press', ['process-booking'])}
 
-            {/* ── Redirects ─────────────────────────────── */}
-            <Route path="/"  element={<Navigate to="/login" replace />} />
-            <Route path="*"  element={<Navigate to="/login" replace />} />
+            {/* Press */}
+            {ph('press', ['process-booking','ideal-hours-booking'])}
 
-          </Routes>
-        </AuthProvider>
-      </AdminAuthProvider>
+            {/* Post Press */}
+            {ph('post-press', ['process-booking'])}
+
+            {/* Logistics */}
+            {ph('logistics', ['courier-booking','courier-tracking'])}
+
+            {/* User Management */}
+            {ph('usermgmt', ['users'])}
+            {ph('user-management', ['users'])}
+
+            {/* 404 within app */}
+            <Route path="*" element={<Navigate to="/dashboard" replace />} />
+          </Route>
+
+          {/* Catch-all */}
+          <Route path="*" element={<Navigate to="/login" replace />} />
+
+        </Routes>
+      </AuthProvider>
     </BrowserRouter>
   );
 }

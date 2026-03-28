@@ -1,34 +1,52 @@
-// routes/authRoutes.js
-const express    = require('express');
-const { body }   = require('express-validator');
-const rateLimit  = require('express-rate-limit');
-const { register, login, changePassword, getMe } = require('../controllers/authController');
+const express = require('express');
+const { body } = require('express-validator');
+const rateLimit = require('express-rate-limit');
+
+const authController = require('../controllers/authController');
 const { protect } = require('../middleware/authMiddleware');
 
 const router = express.Router();
 
-const registerLimiter = rateLimit({ windowMs: 60*60*1000, max: 5,  message: { success: false, message: 'Too many registration attempts.' } });
-const loginLimiter    = rateLimit({ windowMs: 15*60*1000, max: 10, message: { success: false, message: 'Too many login attempts. Try again in 15 minutes.' } });
+const registerLimiter = rateLimit({
+  windowMs: 60 * 60 * 1000,
+  max: 5,
+  message: { success: false, message: 'Too many registration attempts.' }
+});
 
-// POST /api/auth/register — only company info, no credentials
-router.post('/register', registerLimiter, [
-  body('companyName').trim().notEmpty().withMessage('Company name is required').isLength({ min: 2, max: 100 }),
-  body('gstNumber').trim().notEmpty().withMessage('GST number is required')
-    .matches(/^[0-9]{2}[A-Z]{5}[0-9]{4}[A-Z]{1}[1-9A-Z]{1}Z[0-9A-Z]{1}$/).withMessage('Invalid GST number format'),
-  body('email').trim().normalizeEmail().isEmail().withMessage('Invalid email address'),
-], register);
+const loginLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: 1000,
+  message: { success: false, message: 'Too many login attempts. Try again in 15 minutes.' }
+});
 
-// POST /api/auth/login
-router.post('/login', loginLimiter, [
-  body('companyCode').trim().notEmpty().withMessage('Company code is required'),
-  body('username').trim().notEmpty().withMessage('Username is required'),
-  body('password').notEmpty().withMessage('Password is required'),
-], login);
+// REGISTER
+router.post(
+  '/register',
+  registerLimiter,
+  [
+    body('companyName').trim().notEmpty(),
+    body('gstNumber').trim().notEmpty(),
+    body('email').trim().normalizeEmail().isEmail(),
+  ],
+  authController.register
+);
 
-// POST /api/auth/change-password (protected)
-router.post('/change-password', protect, changePassword);
+// LOGIN
+router.post(
+  '/login',
+  loginLimiter,
+  [
+    body('companyCode').trim().notEmpty(),
+    body('username').trim().notEmpty(),
+    body('password').notEmpty(),
+  ],
+  authController.login
+);
 
-// GET /api/auth/me
-router.get('/me', protect, getMe);
+// CHANGE PASSWORD
+router.post('/change-password', protect, authController.changePassword);
+
+// GET ME
+router.get('/me', protect, authController.getMe);
 
 module.exports = router;

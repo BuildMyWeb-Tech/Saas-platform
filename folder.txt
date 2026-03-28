@@ -1,0 +1,92 @@
+C:\Users\ajaik\Desktop\Saas-platform>node show-structure.js
+📁 .git
+📁 backend
+   📄 .env
+   📄 .env.example
+   📄 .gitignore
+   📁 controllers
+      📄 adminController.js
+      📄 authController.js
+      📄 dashboardController.js
+      📄 menuController.js
+   📁 database
+      📄 sqlConnection.js
+   📁 middleware
+      📄 authMiddleware.js
+      📄 errorMiddleware.js
+   📁 models
+      📄 AdminUser.js
+      📄 Company.js
+      📄 User.js
+      📄 VerificationCode.js
+   📄 package-lock.json
+   📄 package.json
+   📄 render.yaml
+   📁 repositories
+      📄 authRepo.js
+      📄 menuRepo.js
+   📁 routes
+      📄 adminRoutes.js
+      📄 authRoutes.js
+      📄 dashboardRoutes.js
+      📄 menuRoutes.js
+   📁 scripts
+      📄 seedAdmin.js
+   📄 server.js
+   📁 services
+      📄 dashboardService.js
+      📄 emailService.js
+      📄 erpAuthService.js
+      📄 menuService.js
+   📁 utils
+      📄 generateCompanyCode.js
+      📄 generateCredentials.js
+      📄 validate.js
+📄 folder.txt
+📁 frontend
+   📄 .env.example
+   📄 .gitignore
+   📄 eslint.config.js
+   📄 index.html
+   📄 package-lock.json
+   📄 package.json
+   📁 public
+      📄 favicon.svg
+      📄 icons.svg
+   📄 README.md
+   📁 src
+      📄 App.css
+      📄 App.jsx
+      📁 assets
+         📄 hero.png
+         📄 react.svg
+         📄 vite.svg
+      📁 components
+         📄 AppLayout.jsx
+         📄 PrivateRoute.jsx
+      📁 context
+         📄 AdminAuthContext.jsx
+         📄 AuthContext.jsx
+      📄 index.css
+      📄 main.jsx
+      📁 pages
+         📁 admin
+            📄 AdminDashboard.jsx
+            📄 AdminLayout.jsx
+            📄 AdminLogin.jsx
+            📄 Companies.jsx
+            📄 CompanyDetail.jsx
+         📄 ChangePassword.jsx
+         📄 Dashboard.jsx
+         📄 Login.jsx
+         📄 PlaceholderPage.jsx
+         📄 Register.jsx
+         📄 Verify.jsx
+      📁 services
+         📄 adminService.js
+         📄 authService.js
+   📄 vercel.json
+   📄 vite.config.js
+📄 Mr Press Management API.postman_collection.json
+📄 Readme.MD
+📄 show-structure.js

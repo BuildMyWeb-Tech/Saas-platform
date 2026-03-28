@@ -1,9 +1,9 @@
 // src/services/authService.js
+// ERP-style auth (SQL Server based, no JWT)
+
 import axios from 'axios';
 
-// In production (Vercel) VITE_API_URL is set to the Render backend URL.
-// In local dev it's empty, so Vite proxy handles /api → localhost:5000.
-const BASE = import.meta.env.VITE_API_URL || '/api';
+const BASE = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
 
 const api = axios.create({
   baseURL: BASE,
@@ -11,46 +11,89 @@ const api = axios.create({
   timeout: 20000,
 });
 
+
+// 🔥 ADD userid HEADER FOR ALL REQUESTS
 api.interceptors.request.use((config) => {
-  const token = localStorage.getItem('pmb_token');
-  if (token) config.headers.Authorization = `Bearer ${token}`;
+  try {
+    const stored = localStorage.getItem('mpm_user');
+
+    if (stored) {
+      const user = JSON.parse(stored);
+
+      if (user?.userId) {
+        config.headers["userid"] = user.userId; // ✅ REQUIRED FOR BACKEND
+      }
+    }
+  } catch (err) {
+    console.warn("Invalid user in storage");
+  }
+
   return config;
 });
 
+
+// 🔥 HANDLE API ERRORS (NO AUTO REDIRECT)
 api.interceptors.response.use(
-  r => r,
-  err => {
-    if (err.response?.status === 401 && err.response?.data?.code === 'TOKEN_EXPIRED') {
-      localStorage.removeItem('pmb_token');
-      localStorage.removeItem('pmb_auth');
-      window.location.href = '/login?reason=session_expired';
+  (response) => response,
+  (error) => {
+    if (error.response?.status === 401) {
+      console.warn("Unauthorized API call - check userId header");
+      // ❌ DO NOT redirect
     }
-    return Promise.reject(err);
+    return Promise.reject(error);
   }
 );
 
-export const registerCompany = async (data) => (await api.post('/auth/register', data)).data;
-export const loginUser = async (data) => {
-  const r = await api.post('/auth/login', data);
-  if (r.data.success) {
-    localStorage.setItem('pmb_token', r.data.data.token);
-    localStorage.setItem('pmb_auth',  JSON.stringify(r.data.data));
+
+
+// 🔐 LOGIN
+export const loginUser = async ({ username, password }) => {
+  const res = await api.post('/auth/login', { username, password });
+
+  if (res.data.success) {
+    const userId = res.data.data.userId;
+
+    // ✅ STORE USER
+    localStorage.setItem(
+      'mpm_user',
+      JSON.stringify({ userId, username })
+    );
   }
-  return r.data;
+
+  return res.data;
 };
-export const changePassword = async (data) => (await api.post('/auth/change-password', data)).data;
-export const getMe          = async ()      => (await api.get('/auth/me')).data;
-export const logout         = ()            => {
-  localStorage.removeItem('pmb_token');
-  localStorage.removeItem('pmb_auth');
+
+
+// 🚪 LOGOUT
+export const logout = () => {
+  localStorage.removeItem('mpm_user');
 };
-export const getStoredAuth  = () => {
+
+
+// 👤 GET STORED USER
+export const getStoredUser = () => {
   try {
-    const raw = localStorage.getItem('pmb_auth');
-    const tok = localStorage.getItem('pmb_token');
-    if (!raw || !tok) return null;
+    const raw = localStorage.getItem('mpm_user');
+    if (!raw) return null;
     return JSON.parse(raw);
-  } catch { return null; }
+  } catch {
+    return null;
+  }
 };
+
+
+// 📋 GET MENUS
+export const getMenus = async (userId) => {
+  const res = await api.get(`/menus/grouped/${userId}`);
+  return res.data;
+};
+
+
+// 📊 GET DASHBOARD
+export const getDashboard = async (userId) => {
+  const res = await api.get(`/dashboard/${userId}`);
+  return res.data;
+};
+
 
 export default api;

@@ -6,16 +6,16 @@ const helmet    = require('helmet');
 const morgan    = require('morgan');
 const rateLimit = require('express-rate-limit');
 
-const connectDB   = require('./config/db');
 const authRoutes  = require('./routes/authRoutes');
 const adminRoutes = require('./routes/adminRoutes');
+const menuRoutes = require("./routes/menuRoutes");
+const dashboardRoutes = require("./routes/dashboardRoutes");
 const { notFound, errorHandler } = require('./middleware/errorMiddleware');
 const { verifyEmailConnection }  = require('./services/emailService');
 
 const app  = express();
 const PORT = process.env.PORT || 5000;
 
-connectDB();
 
 // Trust proxy — required for Render / AWS load balancers
 app.set('trust proxy', 1);
@@ -34,14 +34,16 @@ const getAllowedOrigins = () => {
 app.use(cors({
   origin: (origin, cb) => {
     if (!origin) return cb(null, true);
-    // Allow all *.vercel.app preview URLs
+
     if (/^https:\/\/[a-z0-9-]+(\.vercel\.app)$/.test(origin)) return cb(null, true);
+
     if (getAllowedOrigins().includes(origin)) return cb(null, true);
+
     cb(new Error(`CORS: ${origin} not allowed`));
   },
   credentials: true,
   methods: ['GET','POST','PUT','PATCH','DELETE','OPTIONS'],
-  allowedHeaders: ['Content-Type','Authorization'],
+  allowedHeaders: ['Content-Type', 'Authorization', 'userid'], // 🔥 FIXED
 }));
 
 app.use(rateLimit({ windowMs: 15*60*1000, max: 200, standardHeaders: true, legacyHeaders: false }));
@@ -57,6 +59,8 @@ app.get('/health', (_, res) => res.json({
 
 app.use('/api/auth',  authRoutes);
 app.use('/api/admin', adminRoutes);
+app.use("/api/menus", menuRoutes);
+app.use("/api/dashboard", dashboardRoutes);
 app.use(notFound);
 app.use(errorHandler);
 

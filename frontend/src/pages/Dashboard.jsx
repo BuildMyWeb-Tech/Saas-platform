@@ -1,113 +1,152 @@
 // src/pages/Dashboard.jsx
-import React from 'react';
-import { useAuth } from '../context/AuthContext';
+import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-
-const STATS = [
-  { icon: '🖨️', value: '0', label: 'Printers Online',  sub: 'No devices registered' },
-  { icon: '📋', value: '0', label: 'Active Jobs',       sub: 'Queue is empty' },
-  { icon: '🎨', value: '0', label: 'Templates',         sub: 'None created yet' },
-  { icon: '✅', value: '0', label: 'Jobs Completed',    sub: 'This month' },
-];
-
-const MODULES = [
-  { icon: '📡', title: 'Printer Devices',    desc: 'Register and manage your IoT printer fleet.' },
-  { icon: '📋', title: 'Print Job Queue',    desc: 'Create and dispatch print jobs in real-time.' },
-  { icon: '🎨', title: 'Branding Templates', desc: 'Logos, brand colors, and box designs.' },
-  { icon: '👥', title: 'Team Members',       desc: 'Invite users with role-based access control.' },
-  { icon: '📊', title: 'Analytics',          desc: 'Monitor volumes, uptime, and completion rates.' },
-  { icon: '⚙️', title: 'Settings',           desc: 'Company profile, API keys, and preferences.' },
-];
-
-const greeting = () => {
-  const h = new Date().getHours();
-  if (h < 12) return 'Good morning';
-  if (h < 17) return 'Good afternoon';
-  return 'Good evening';
-};
+import { useAuth } from '../context/AuthContext';
+import { getDashboard, getMenus } from '../services/authService';
 
 export default function Dashboard() {
-  const { user, company, logout } = useAuth();
+  const { userId, username } = useAuth();
   const navigate = useNavigate();
 
+  const [stats, setStats]     = useState(null);
+  const [menus, setMenus]     = useState([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    if (!userId) return;
+    Promise.all([
+      getDashboard(userId),
+      getMenus(userId),
+    ])
+      .then(([dashRes, menuRes]) => {
+        if (dashRes.success) setStats(dashRes.data);
+        if (menuRes.success) setMenus(menuRes.data);
+      })
+      .catch(console.error)
+      .finally(() => setLoading(false));
+  }, [userId]);
+
+  const greeting = () => {
+    const h = new Date().getHours();
+    if (h < 12) return 'Good morning';
+    if (h < 17) return 'Good afternoon';
+    return 'Good evening';
+  };
+
+  if (loading) return (
+    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 80 }}>
+      <div className="pmb-spinner" />
+    </div>
+  );
+
   return (
-    <div className="dashboard-layout">
-      <header className="topbar">
-        <div className="topbar-left">
-          <div className="auth-logo-icon" style={{ width: 26, height: 26, fontSize: 13, borderRadius: 6, flexShrink: 0 }}>🖨️</div>
-          <span className="topbar-logo">PrintMixBox</span>
-          <div className="topbar-divider" />
-          <span className="topbar-company">{company?.companyCode}</span>
+    <div className="dash-page">
+      {/* Page header */}
+      <div className="dash-header">
+        <div>
+          <h1 className="dash-title">{greeting()}, {username} 👋</h1>
+          <p className="dash-subtitle">Here's what's happening with your press operations today.</p>
         </div>
-        <div className="topbar-right">
-          <span className="topbar-user hidden-sm"><span>{user?.username}</span></span>
-          <span className="badge badge-blue hidden-sm" style={{ textTransform: 'capitalize' }}>{user?.role}</span>
-          <button className="btn btn-ghost btn-sm" onClick={() => { logout(); navigate('/login'); }}>Sign out</button>
-        </div>
-      </header>
+      </div>
 
-      <main className="dashboard-main">
-        {/* Greeting */}
-        <div style={{ marginBottom: 24 }}>
-          <h1 style={{ fontSize: 'var(--text-2xl)', fontWeight: 700, letterSpacing: '-0.5px', marginBottom: 4 }}>
-            {greeting()}, {user?.username}
-          </h1>
-          <p style={{ fontSize: 'var(--text-sm)', color: 'var(--color-text-secondary)' }}>
-            {company?.companyName}&nbsp;·&nbsp;
-            {(company?.plan || 'free').charAt(0).toUpperCase() + (company?.plan || 'free').slice(1)} plan
-          </p>
-        </div>
-
-        {/* Stats */}
-        <div className="stats-grid">
-          {STATS.map(s => (
-            <div className="stat-card" key={s.label}>
-              <div style={{ fontSize: 18, marginBottom: 8 }}>{s.icon}</div>
-              <div className="stat-value">{s.value}</div>
-              <div className="stat-label">{s.label}</div>
-              <div className="stat-sub">{s.sub}</div>
+      {/* Stats row */}
+      <div className="dash-stats-row">
+        {[
+          {
+            icon: (
+              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
+                <rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/>
+                <rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/>
+              </svg>
+            ),
+            label: 'Total Modules',
+            value: stats?.totalMenus ?? '—',
+            color: '#2563eb',
+            bg: '#eff4ff',
+          },
+          {
+            icon: (
+              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
+                <line x1="8" y1="6" x2="21" y2="6"/>
+                <line x1="8" y1="12" x2="21" y2="12"/>
+                <line x1="8" y1="18" x2="21" y2="18"/>
+                <line x1="3" y1="6" x2="3.01" y2="6"/>
+                <line x1="3" y1="12" x2="3.01" y2="12"/>
+                <line x1="3" y1="18" x2="3.01" y2="18"/>
+              </svg>
+            ),
+            label: 'Total Sub-Menus',
+            value: stats?.totalSubMenus ?? '—',
+            color: '#16a34a',
+            bg: '#f0fdf4',
+          },
+          {
+            icon: (
+              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
+                <path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/>
+                <circle cx="12" cy="7" r="4"/>
+              </svg>
+            ),
+            label: 'Logged In User',
+            value: username,
+            color: '#d97706',
+            bg: '#fffbeb',
+            isText: true,
+          },
+          {
+            icon: (
+              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
+                <circle cx="12" cy="12" r="10"/>
+                <polyline points="12 6 12 12 16 14"/>
+              </svg>
+            ),
+            label: 'Session',
+            value: new Date().toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' }),
+            color: '#7c3aed',
+            bg: '#f5f3ff',
+            isText: true,
+          },
+        ].map(s => (
+          <div className="dash-stat-card" key={s.label}>
+            <div className="dash-stat-icon" style={{ background: s.bg, color: s.color }}>
+              {s.icon}
             </div>
-          ))}
-        </div>
-
-        {/* Company detail card */}
-        <div className="card" style={{ marginBottom: 24 }}>
-          <div className="card-header">
-            <span className="card-title">Company Details</span>
-            <span className="badge badge-green">● Verified</span>
-          </div>
-          {[
-            { label: 'Company Name', value: company?.companyName },
-            { label: 'Company Code', value: company?.companyCode, mono: true },
-            { label: 'Username',     value: user?.username },
-            { label: 'Role',         value: user?.role, cap: true },
-            { label: 'Plan',         value: company?.plan || 'Free', cap: true },
-          ].map(r => (
-            <div className="info-row" key={r.label}>
-              <span className="info-row-label">{r.label}</span>
-              <span className={`info-row-value${r.mono ? ' mono' : ''}`} style={r.cap ? { textTransform: 'capitalize' } : {}}>{r.value}</span>
-            </div>
-          ))}
-        </div>
-
-        {/* Modules */}
-        {/* <div className="section-header">
-          <h2>Platform Modules</h2>
-          <p>These modules are under development and will be available soon.</p>
-        </div>
-        <div className="modules-grid">
-          {MODULES.map(m => (
-            <div className="module-card coming-soon" key={m.title}>
-              <div className="module-card-tag">
-                <span className="badge badge-yellow" style={{ fontSize: 10 }}>Coming Soon</span>
+            <div className="dash-stat-body">
+              <div className="dash-stat-value" style={s.isText ? { fontSize: 16, fontWeight: 600 } : {}}>
+                {s.value}
               </div>
-              <div className="module-card-icon">{m.icon}</div>
-              <h3 className="module-card-title">{m.title}</h3>
-              <p className="module-card-desc">{m.desc}</p>
+              <div className="dash-stat-label">{s.label}</div>
             </div>
-          ))}
-        </div> */}
-      </main>
+          </div>
+        ))}
+      </div>
+
+      {/* Module cards grid */}
+      <div className="dash-section-header">
+        <h2>Your Modules</h2>
+        <p>Quick access to all sections you have permission to use</p>
+      </div>
+
+      <div className="dash-modules-grid">
+        {menus.map((group) => (
+          <div className="dash-module-card" key={group.menu}>
+            <div className="dash-module-header">
+              <span className="dash-module-icon">
+                {({ 'Setup': '⚙️', 'Planning': '📋', 'Pre Press': '🖨️', 'Press': '🖨️', 'Post Press': '📦', 'Logistics': '🚚', 'User Management': '👥' })[group.menu] || '📄'}
+              </span>
+              <h3 className="dash-module-name">{group.menu}</h3>
+              <span className="dash-module-count">{group.subMenus.length}</span>
+            </div>
+            <div className="dash-module-subs">
+              {group.subMenus.map(sub => (
+                <span key={sub.id} className="dash-module-sub-chip">
+                  {sub.name}
+                </span>
+              ))}
+            </div>
+          </div>
+        ))}
+      </div>
     </div>
   );
 }
