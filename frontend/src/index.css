@@ -114,6 +114,21 @@ input, select, textarea { font-family: var(--font); }
   font-size: clamp(26px, 3vw, 32px); font-weight: 800;
   line-height: 1.2; letter-spacing: -0.8px; color: #fff; margin-bottom: 14px;
 }
+
+/* ── Hide blue left panel on tablet and mobile ── */
+@media (max-width: 1100px) {
+  .auth-layout {
+    grid-template-columns: 1fr;
+    background: var(--color-surface);
+  }
+  .auth-panel-left {
+    display: none !important;
+    visibility: hidden;
+    width: 0;
+    overflow: hidden;
+  }
+}
+
 .login-brand-headline span { color: #93c5fd; }
 .login-brand-desc { font-size: 15px; color: rgba(255,255,255,0.6); line-height: 1.65; }
 
@@ -583,7 +598,16 @@ input, select, textarea { font-family: var(--font); }
 /* ═══════════════════════════════════════════════════════════
    ANIMATIONS
    ═══════════════════════════════════════════════════════════ */
+@media (max-width: 900px) {
+  .login-page {
+    grid-template-columns: 1fr;
+  }
 
+  .login-brand {
+    display: none !important;
+  }
+}
+  
 @keyframes spin    { to { transform: rotate(360deg); } }
 @keyframes fadeUp  { from { opacity: 0; transform: translateY(12px); } to { opacity: 1; transform: translateY(0); } }
 @keyframes fadeIn  { from { opacity: 0; } to { opacity: 1; } }
