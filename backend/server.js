@@ -10,6 +10,7 @@ const authRoutes  = require('./routes/authRoutes');
 const adminRoutes = require('./routes/adminRoutes');
 const menuRoutes = require("./routes/menuRoutes");
 const dashboardRoutes = require("./routes/dashboardRoutes");
+const departmentRoutes = require("./routes/departmentRoutes");
 const { notFound, errorHandler } = require('./middleware/errorMiddleware');
 const { verifyEmailConnection }  = require('./services/emailService');
 
@@ -61,6 +62,7 @@ app.use('/api/auth',  authRoutes);
 app.use('/api/admin', adminRoutes);
 app.use("/api/menus", menuRoutes);
 app.use("/api/dashboard", dashboardRoutes);
+app.use("/api/departments", departmentRoutes);
 app.use(notFound);
 app.use(errorHandler);
 

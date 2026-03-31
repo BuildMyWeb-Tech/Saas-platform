@@ -8,6 +8,7 @@ C:\Users\ajaik\Desktop\Saas-platform>node show-structure.js
       📄 adminController.js
       📄 authController.js
       📄 dashboardController.js
+      📄 departmentController.js
       📄 menuController.js
    📁 database
       📄 sqlConnection.js
@@ -24,11 +25,13 @@ C:\Users\ajaik\Desktop\Saas-platform>node show-structure.js
    📄 render.yaml
    📁 repositories
       📄 authRepo.js
+      📄 generalRepo.js
       📄 menuRepo.js
    📁 routes
       📄 adminRoutes.js
       📄 authRoutes.js
       📄 dashboardRoutes.js
+      📄 departmentRoutes.js
       📄 menuRoutes.js
    📁 scripts
       📄 seedAdmin.js
@@ -37,6 +40,7 @@ C:\Users\ajaik\Desktop\Saas-platform>node show-structure.js
       📄 dashboardService.js
       📄 emailService.js
       📄 erpAuthService.js
+      📄 generalService.js
       📄 menuService.js
    📁 utils
       📄 generateCompanyCode.js
@@ -88,5 +92,6 @@ C:\Users\ajaik\Desktop\Saas-platform>node show-structure.js
    📄 vercel.json
    📄 vite.config.js
 📄 Mr Press Management API.postman_collection.json
+📄 OREADME.md
 📄 Readme.MD
 📄 show-structure.js

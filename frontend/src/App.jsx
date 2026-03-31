@@ -1,14 +1,15 @@
 // src/App.jsx
 import React from 'react';
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
-import { AuthProvider } from './context/AuthContext';
+import { AuthProvider }  from './context/AuthContext';
 import PrivateRoute      from './components/PrivateRoute';
 import AppLayout         from './components/AppLayout';
 import Login             from './pages/Login';
 import Dashboard         from './pages/Dashboard';
+import Department        from './pages/setup/Department';
 import PlaceholderPage   from './pages/PlaceholderPage';
 
-// Helper to build placeholder routes for a section
+// Helper: placeholder routes for a section
 const ph = (section, subs) => subs.map(sub => (
   <Route
     key={`${section}/${sub}`}
@@ -22,7 +23,6 @@ export default function App() {
     <BrowserRouter>
       <AuthProvider>
         <Routes>
-
           {/* Public */}
           <Route path="/login" element={<Login />} />
 
@@ -35,8 +35,9 @@ export default function App() {
             <Route index element={<Navigate to="/dashboard" replace />} />
             <Route path="dashboard" element={<Dashboard />} />
 
-            {/* Setup */}
-            {ph('setup', ['department','designation','employees','machines','process','customers'])}
+            {/* Setup — Department is live, rest are placeholders */}
+            <Route path="setup/department" element={<Department />} />
+            {ph('setup', ['designation','employees','machines','process','customers'])}
 
             {/* Planning */}
             {ph('planning', ['job-card','process-planning'])}
@@ -57,13 +58,10 @@ export default function App() {
             {ph('usermgmt', ['users'])}
             {ph('user-management', ['users'])}
 
-            {/* 404 within app */}
             <Route path="*" element={<Navigate to="/dashboard" replace />} />
           </Route>
 
-          {/* Catch-all */}
           <Route path="*" element={<Navigate to="/login" replace />} />
-
         </Routes>
       </AuthProvider>
     </BrowserRouter>
