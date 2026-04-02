@@ -5,9 +5,17 @@ const service = require("../services/generalMasterService");
 exports.getData = async (req, res, next) => {
   try {
     const type = Number(req.params.type);
-    const tag = req.query.tag === "0" ? 0 : 1;
+    const tagParam = req.query.tag;
 
-    const data = await service.getGeneralMaster(type, tag);
+    let data;
+
+    // ✅ NEW: support ALL
+    if (tagParam === "all") {
+      data = await service.getAllGeneralMaster(type);
+    } else {
+      const tag = tagParam === "0" ? 0 : 1;
+      data = await service.getGeneralMaster(type, tag);
+    }
 
     res.json({
       success: true,

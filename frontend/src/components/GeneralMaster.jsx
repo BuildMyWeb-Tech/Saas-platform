@@ -306,10 +306,10 @@ export default function GeneralMaster({ gtypeuid, title }) {
       <div className="gm-page-header">
         <div>
           <h1 className="gm-page-title">{title} List</h1>
-          <p className="gm-page-subtitle">
+          {/* <p className="gm-page-subtitle">
             {isActive ? 'Showing active records' : 'Showing inactive records'}
             {permLoaded && <PermBadge canAdd={canAdd} canEdit={canEdit} canDelete={canDelete} />}
-          </p>
+          </p> */}
         </div>
 
         {/* ── Add button: hidden when mWrite = 0 ── */}
@@ -321,7 +321,7 @@ export default function GeneralMaster({ gtypeuid, title }) {
       </div>
 
       {/* ── Controls ── */}
-      <div className="gm-controls">
+      {/* <div className="gm-controls">
         <Toggle checked={isActive} onChange={() => setIsActive(v => !v)} />
         <div className="gm-controls-right">
           <div className="gm-search-wrap">
@@ -334,7 +334,7 @@ export default function GeneralMaster({ gtypeuid, title }) {
             )}
           </div>
         </div>
-      </div>
+      </div> */}
 
       {loadError && <div className="gm-alert-error">⚠ {loadError}</div>}
 
@@ -410,14 +410,14 @@ export default function GeneralMaster({ gtypeuid, title }) {
       </div>
 
       {/* Footer */}
-      {!loading && (
+      {/* {!loading && (
         <div className="gm-footer">
           {displayRows.length !== rows.length
             ? `${displayRows.length} of ${rows.length} records`
             : `${rows.length} record${rows.length !== 1 ? 's' : ''}`}
           {' · '}{isActive ? '🟢 Active' : '🔴 Inactive'}
         </div>
-      )}
+      )} */}
     </div>
   );
 }

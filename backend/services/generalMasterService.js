@@ -5,15 +5,32 @@ async function getGeneralMaster(type, tag = 1) {
   const data = await repo.getGeneralData(type, tag);
 
   return data
-  .filter(item => item.uid !== null) // 🔥 ADD THIS
-  .map(item => ({
-    id: Number(item.uid),
-    code: item.gcode,
-    name: item.gname,
-    shortName: item.gsname
-  }));
+    .filter(item => item.uid !== null)
+    .map(item => ({
+      id: Number(item.uid),
+      code: item.gcode,
+      name: item.gname,
+      shortName: item.gsname
+    }));
 }
 
+// 🔹 GET BOTH ACTIVE + INACTIVE
+async function getAllGeneralMaster(type) {
+  const active = await repo.getGeneralData(type, 1);
+  const inactive = await repo.getGeneralData(type, 0);
+
+  const combined = [...active, ...inactive];
+
+  return combined
+    .filter(item => item.uid !== null)
+    .map(item => ({
+      id: Number(item.uid),
+      code: item.gcode,
+      name: item.gname,
+      shortName: item.gsname,
+      isActive: Number(item.tag ?? 1) // optional if available
+    }));
+}
 
 // 🔹 CREATE
 async function createGeneralMaster({ userId, type, code, name, shortName }) {
@@ -64,6 +81,7 @@ async function deleteGeneralMaster({ userId, type, id }) {
 
 module.exports = {
   getGeneralMaster,
+  getAllGeneralMaster,
   createGeneralMaster,
   updateGeneralMaster,
   deleteGeneralMaster
