@@ -1,11 +1,11 @@
 const { poolPromise, sql } = require("../database/sqlConnection");
 
-// 🔹 GET GRID DATA
-async function getGeneralData(gtypeuid, tag) {
+// 🔹 GET DATA (GRID)
+async function getGeneralData(type, tag) {
   const pool = await poolPromise;
 
   const result = await pool.request()
-    .input("Gtypeuid", sql.Int, gtypeuid)
+    .input("Gtypeuid", sql.Int, type)
     .input("Tag", sql.Bit, tag)
     .execute("PR_GetGeneralMData_FrontGrid");
 
@@ -14,17 +14,17 @@ async function getGeneralData(gtypeuid, tag) {
 
 
 // 🔹 INSERT / UPDATE / DELETE
-async function iudGeneral(data) {
+async function iudGeneral({ mode, userId, gtypeuid, code, name, shortName, uid }) {
   const pool = await poolPromise;
 
   const result = await pool.request()
-    .input("Mode", sql.Int, data.mode)
-    .input("Userid", sql.Int, data.userId)
-    .input("GTypeMUid", sql.Int, data.gtypeuid)
-    .input("gcode", sql.NVarChar(100), data.code)
-    .input("gname", sql.NVarChar(200), data.name)
-    .input("gsname", sql.NVarChar(80), data.shortName)
-    .input("Uid", sql.Int, data.uid)
+    .input("Mode", sql.Int, mode)
+    .input("Userid", sql.Int, userId)
+    .input("GTypeMUid", sql.Int, gtypeuid)
+    .input("gcode", sql.NVarChar(100), code || "")
+    .input("gname", sql.NVarChar(200), name || "")
+    .input("gsname", sql.NVarChar(80), shortName || "")
+    .input("Uid", sql.Int, uid || 0)
     .execute("PR_IUD_GeneralM");
 
   return result.recordset;

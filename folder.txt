@@ -1,3 +1,4 @@
+
 C:\Users\ajaik\Desktop\Saas-platform>node show-structure.js
 📁 .git
 📁 backend
@@ -8,7 +9,7 @@ C:\Users\ajaik\Desktop\Saas-platform>node show-structure.js
       📄 adminController.js
       📄 authController.js
       📄 dashboardController.js
-      📄 departmentController.js
+      📄 generalMasterController.js
       📄 menuController.js
    📁 database
       📄 sqlConnection.js
@@ -31,7 +32,7 @@ C:\Users\ajaik\Desktop\Saas-platform>node show-structure.js
       📄 adminRoutes.js
       📄 authRoutes.js
       📄 dashboardRoutes.js
-      📄 departmentRoutes.js
+      📄 generalMasterRoutes.js
       📄 menuRoutes.js
    📁 scripts
       📄 seedAdmin.js
@@ -40,7 +41,7 @@ C:\Users\ajaik\Desktop\Saas-platform>node show-structure.js
       📄 dashboardService.js
       📄 emailService.js
       📄 erpAuthService.js
-      📄 generalService.js
+      📄 generalMasterService.js
       📄 menuService.js
    📁 utils
       📄 generateCompanyCode.js
@@ -67,6 +68,7 @@ C:\Users\ajaik\Desktop\Saas-platform>node show-structure.js
          📄 vite.svg
       📁 components
          📄 AppLayout.jsx
+         📄 GeneralMaster.jsx
          📄 PrivateRoute.jsx
       📁 context
          📄 AdminAuthContext.jsx
@@ -85,10 +87,18 @@ C:\Users\ajaik\Desktop\Saas-platform>node show-structure.js
          📄 Login.jsx
          📄 PlaceholderPage.jsx
          📄 Register.jsx
+         📁 setup
+            📄 Department.jsx
+            📄 Designation.jsx
+            📄 Employees.jsx
+            📄 Machines.jsx
+            📄 Process.jsx
          📄 Verify.jsx
       📁 services
          📄 adminService.js
          📄 authService.js
+         📄 departmentService.js
+         📄 generalService.js
    📄 vercel.json
    📄 vite.config.js
 📄 Mr Press Management API.postman_collection.json

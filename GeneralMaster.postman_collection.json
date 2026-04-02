@@ -1,0 +1,113 @@
+{
+  "info": {
+    "name": "Mr Press Management - All Modules CRUD",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    { "key": "baseUrl", "value": "http://localhost:5000/api" },
+    { "key": "userId", "value": "2" }
+  ],
+  "item": [
+
+    {
+      "name": "📁 Department (Type 1)",
+      "item": [
+        {
+          "name": "GET Active",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "userid", "value": "{{userId}}" }],
+            "url": "{{baseUrl}}/general/1?tag=1"
+          }
+        },
+        {
+          "name": "GET Inactive",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "userid", "value": "{{userId}}" }],
+            "url": "{{baseUrl}}/general/1?tag=0"
+          }
+        },
+        {
+          "name": "CREATE",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "userid", "value": "{{userId}}" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"userId\": {{userId}},\n  \"code\": \"D001\",\n  \"name\": \"Department Test\",\n  \"shortName\": \"DT\"\n}"
+            },
+            "url": "{{baseUrl}}/general/1"
+          }
+        },
+        {
+          "name": "UPDATE",
+          "request": {
+            "method": "PUT",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "userid", "value": "{{userId}}" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"userId\": {{userId}},\n  \"code\": \"D001\",\n  \"name\": \"Department Updated\",\n  \"shortName\": \"DU\"\n}"
+            },
+            "url": "{{baseUrl}}/general/1/1"
+          }
+        },
+        {
+          "name": "DELETE",
+          "request": {
+            "method": "DELETE",
+            "header": [{ "key": "userid", "value": "{{userId}}" }],
+            "url": "{{baseUrl}}/general/1/1"
+          }
+        }
+      ]
+    },
+
+    {
+      "name": "📁 Designation (Type 2)",
+      "item": [
+        { "name": "GET Active", "request": { "method": "GET", "header": [{ "key": "userid", "value": "{{userId}}" }], "url": "{{baseUrl}}/general/2?tag=1" }},
+        { "name": "CREATE", "request": { "method": "POST", "header": [{ "key": "Content-Type", "value": "application/json" },{ "key": "userid", "value": "{{userId}}" }], "body": { "mode": "raw", "raw": "{\n  \"userId\": {{userId}},\n  \"code\": \"DS01\",\n  \"name\": \"Designation Test\",\n  \"shortName\": \"DS\"\n}" }, "url": "{{baseUrl}}/general/2" }},
+        { "name": "UPDATE", "request": { "method": "PUT", "header": [{ "key": "Content-Type", "value": "application/json" },{ "key": "userid", "value": "{{userId}}" }], "body": { "mode": "raw", "raw": "{\n  \"userId\": {{userId}},\n  \"code\": \"DS01\",\n  \"name\": \"Designation Updated\",\n  \"shortName\": \"DU\"\n}" }, "url": "{{baseUrl}}/general/2/1" }},
+        { "name": "DELETE", "request": { "method": "DELETE", "header": [{ "key": "userid", "value": "{{userId}}" }], "url": "{{baseUrl}}/general/2/1" }}
+      ]
+    },
+
+    {
+      "name": "📁 Employees (Type 3)",
+      "item": [
+        { "name": "GET Active", "request": { "method": "GET", "header": [{ "key": "userid", "value": "{{userId}}" }], "url": "{{baseUrl}}/general/3?tag=1" }},
+        { "name": "CREATE", "request": { "method": "POST", "header": [{ "key": "Content-Type", "value": "application/json" },{ "key": "userid", "value": "{{userId}}" }], "body": { "mode": "raw", "raw": "{\n  \"userId\": {{userId}},\n  \"code\": \"E01\",\n  \"name\": \"Employee Test\",\n  \"shortName\": \"EMP\"\n}" }, "url": "{{baseUrl}}/general/3" }},
+        { "name": "UPDATE", "request": { "method": "PUT", "header": [{ "key": "Content-Type", "value": "application/json" },{ "key": "userid", "value": "{{userId}}" }], "body": { "mode": "raw", "raw": "{\n  \"userId\": {{userId}},\n  \"code\": \"E01\",\n  \"name\": \"Employee Updated\",\n  \"shortName\": \"EU\"\n}" }, "url": "{{baseUrl}}/general/3/1" }},
+        { "name": "DELETE", "request": { "method": "DELETE", "header": [{ "key": "userid", "value": "{{userId}}" }], "url": "{{baseUrl}}/general/3/1" }}
+      ]
+    },
+
+    {
+      "name": "📁 Machines (Type 4)",
+      "item": [
+        { "name": "GET Active", "request": { "method": "GET", "header": [{ "key": "userid", "value": "{{userId}}" }], "url": "{{baseUrl}}/general/4?tag=1" }},
+        { "name": "CREATE", "request": { "method": "POST", "header": [{ "key": "Content-Type", "value": "application/json" },{ "key": "userid", "value": "{{userId}}" }], "body": { "mode": "raw", "raw": "{\n  \"userId\": {{userId}},\n  \"code\": \"M01\",\n  \"name\": \"Machine Test\",\n  \"shortName\": \"MC\"\n}" }, "url": "{{baseUrl}}/general/4" }},
+        { "name": "UPDATE", "request": { "method": "PUT", "header": [{ "key": "Content-Type", "value": "application/json" },{ "key": "userid", "value": "{{userId}}" }], "body": { "mode": "raw", "raw": "{\n  \"userId\": {{userId}},\n  \"code\": \"M01\",\n  \"name\": \"Machine Updated\",\n  \"shortName\": \"MU\"\n}" }, "url": "{{baseUrl}}/general/4/1" }},
+        { "name": "DELETE", "request": { "method": "DELETE", "header": [{ "key": "userid", "value": "{{userId}}" }], "url": "{{baseUrl}}/general/4/1" }}
+      ]
+    },
+
+    {
+      "name": "📁 Process (Type 5)",
+      "item": [
+        { "name": "GET Active", "request": { "method": "GET", "header": [{ "key": "userid", "value": "{{userId}}" }], "url": "{{baseUrl}}/general/5?tag=1" }},
+        { "name": "CREATE", "request": { "method": "POST", "header": [{ "key": "Content-Type", "value": "application/json" },{ "key": "userid", "value": "{{userId}}" }], "body": { "mode": "raw", "raw": "{\n  \"userId\": {{userId}},\n  \"code\": \"P01\",\n  \"name\": \"Process Test\",\n  \"shortName\": \"PR\"\n}" }, "url": "{{baseUrl}}/general/5" }},
+        { "name": "UPDATE", "request": { "method": "PUT", "header": [{ "key": "Content-Type", "value": "application/json" },{ "key": "userid", "value": "{{userId}}" }], "body": { "mode": "raw", "raw": "{\n  \"userId\": {{userId}},\n  \"code\": \"P01\",\n  \"name\": \"Process Updated\",\n  \"shortName\": \"PU\"\n}" }, "url": "{{baseUrl}}/general/5/1" }},
+        { "name": "DELETE", "request": { "method": "DELETE", "header": [{ "key": "userid", "value": "{{userId}}" }], "url": "{{baseUrl}}/general/5/1" }}
+      ]
+    }
+
+  ]
+}
