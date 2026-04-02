@@ -1,14 +1,22 @@
 const menuRepo = require("../repositories/menuRepo");
 
 async function getDashboardData(userId) {
-  const menus = await menuRepo.getMenus(userId);
+  const rows = await menuRepo.getUserMenus(userId);
 
-  const totalMenus = new Set(menus.map(m => m.menuname)).size;
+  const modules = new Set();
+  let totalSubMenus = 0;
+
+  for (const row of rows) {
+    const parent = row.menuname;
+    const sub = row.SubMenuName;
+
+    if (parent) modules.add(parent);
+    if (sub) totalSubMenus++;
+  }
 
   return {
-    userId,
-    totalMenus,
-    totalSubMenus: menus.length
+    totalModules: modules.size,
+    totalSubMenus
   };
 }
 

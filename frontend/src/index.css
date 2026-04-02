@@ -287,3 +287,54 @@ button,input,select,textarea{font-family:var(--font);}
 .gm-toast{position:fixed;bottom:20px;right:20px;background:#1e2d3d;border:1px solid var(--grid-border);border-left:4px solid var(--grid-accent);color:#e2e8f0;padding:11px 16px;border-radius:8px;font-size:13px;font-weight:500;display:flex;align-items:center;gap:8px;z-index:9999;box-shadow:0 8px 24px rgba(0,0,0,0.4);animation:fadeUp 0.2s ease;max-width:min(360px,calc(100vw - 28px));}
 .gm-toast-error{border-left-color:#f87171;}
 @media(max-width:480px){.gm-toast{right:12px;left:12px;bottom:14px;}}
+
+
+
+
+/* ── Append to src/index.css ─────────────────────────────────
+   Permission badges & locked icon styles
+   ──────────────────────────────────────────────────────────── */
+
+/* Permission info row under subtitle */
+.gm-perm-badges {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: 4px;
+  font-size: 11px;
+  color: #64748b;
+}
+.gm-perm-no {
+  display: inline-block;
+  background: rgba(248,113,113,0.12);
+  border: 1px solid rgba(248,113,113,0.25);
+  color: #f87171;
+  font-size: 10px;
+  font-weight: 600;
+  padding: 1px 6px;
+  border-radius: 4px;
+  margin-left: 3px;
+  letter-spacing: 0.3px;
+}
+
+/* Locked icon placeholder — same size as icon buttons */
+.gm-icon-locked {
+  width: 30px;
+  height: 30px;
+  border-radius: 6px;
+  border: 1px solid rgba(100,116,139,0.15);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: none;
+  margin: 0 2px;
+  color: #334155;
+  cursor: not-allowed;
+  opacity: 0.45;
+}
+
+/* Warning toast variant */
+.gm-toast-warn {
+  border-left-color: #f59e0b;
+  color: #fcd34d;
+}

@@ -1,23 +1,15 @@
-const menuService = require("../services/menuService");
+// backend/controllers/menuController.js
+
+const service = require("../services/menuService");
 
 exports.getGroupedMenus = async (req, res, next) => {
   try {
-    const { userId } = req.params;
+    const userId = Number(req.params.userId);
+    if (!userId) return res.status(400).json({ success: false, message: "userId is required" });
 
-    if (!userId) {
-      return res.status(400).json({
-        success: false,
-        message: "UserId is required"
-      });
-    }
+    const data = await service.getGroupedMenus(userId);
 
-    const menus = await menuService.getGroupedMenus(userId);
-
-    res.json({
-      success: true,
-      data: menus
-    });
-
+    res.json({ success: true, data });
   } catch (err) {
     next(err);
   }

@@ -60,7 +60,7 @@ export default function Dashboard() {
               </svg>
             ),
             label: 'Total Modules',
-            value: stats?.totalMenus ?? '—',
+            value: stats?.totalModules ?? '—',
             color: '#2563eb',
             bg: '#eff4ff',
           },

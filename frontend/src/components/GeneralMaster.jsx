@@ -1,27 +1,36 @@
 // src/components/GeneralMaster.jsx
+// Reusable CRUD master — respects mWrite / mUpdate / mDelete permissions
+
 import React, { useEffect, useState, useCallback, useMemo } from 'react';
 import { fetchGeneral, createGeneral, updateGeneral, deleteGeneral } from '../services/generalService';
+import { usePermissions } from '../context/AuthContext';
 
+/* ── Icons ─────────────────────────────────────────────────── */
 const Ico = {
-  Edit: () => (<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>),
-  Trash: () => (<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 01-2 2H8a2 2 0 01-2-2L5 6"/><path d="M10 11v6M14 11v6"/><path d="M9 6V4a1 1 0 011-1h4a1 1 0 011 1v2"/></svg>),
-  Plus: () => (<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>),
-  Close: () => (<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>),
+  Edit:   () => (<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>),
+  Trash:  () => (<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 01-2 2H8a2 2 0 01-2-2L5 6"/><path d="M10 11v6M14 11v6"/><path d="M9 6V4a1 1 0 011-1h4a1 1 0 011 1v2"/></svg>),
+  Plus:   () => (<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>),
+  Close:  () => (<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>),
   Search: () => (<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>),
+  Lock:   () => (<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0110 0v4"/></svg>),
 };
 
+/* ── Toast ─────────────────────────────────────────────────── */
 function Toast({ toast }) {
   if (!toast.msg) return null;
   return (
-    <div className={`gm-toast ${toast.type === 'error' ? 'gm-toast-error' : ''}`}>
-      <span>{toast.type === 'error' ? '⚠' : '✓'}</span>{toast.msg}
+    <div className={`gm-toast ${toast.type === 'error' ? 'gm-toast-error' : toast.type === 'warn' ? 'gm-toast-warn' : ''}`}>
+      <span>{toast.type === 'error' ? '⚠' : toast.type === 'warn' ? '🔒' : '✓'}</span>
+      {toast.msg}
     </div>
   );
 }
 
+/* ── Toggle ────────────────────────────────────────────────── */
 function Toggle({ checked, onChange }) {
   return (
-    <div className="gm-toggle-wrap" onClick={onChange} role="switch" aria-checked={checked} tabIndex={0} onKeyDown={e => e.key === ' ' && onChange()}>
+    <div className="gm-toggle-wrap" onClick={onChange} role="switch" aria-checked={checked}
+      tabIndex={0} onKeyDown={e => e.key === ' ' && onChange()}>
       <span className="gm-toggle-label">Show:</span>
       <div className={`gm-toggle ${checked ? 'on' : 'off'}`}><div className="gm-toggle-knob" /></div>
       <span className={`gm-toggle-state ${checked ? 'active-state' : 'inactive-state'}`}>
@@ -31,6 +40,7 @@ function Toggle({ checked, onChange }) {
   );
 }
 
+/* ── SortTh ────────────────────────────────────────────────── */
 function SortTh({ label, field, sortField, sortDir, onSort }) {
   const active = sortField === field;
   return (
@@ -38,14 +48,30 @@ function SortTh({ label, field, sortField, sortDir, onSort }) {
       <div className="gm-th-inner">
         {label}
         <span className="gm-sort-arrows">
-          <svg width="8" height="5" viewBox="0 0 8 5"><path d="M4 0L7.46 5H.54L4 0z" fill={active && sortDir==='asc' ? '#818cf8' : '#475569'}/></svg>
-          <svg width="8" height="5" viewBox="0 0 8 5"><path d="M4 5L.54 0H7.46L4 5z" fill={active && sortDir==='desc' ? '#818cf8' : '#475569'}/></svg>
+          <svg width="8" height="5" viewBox="0 0 8 5"><path d="M4 0L7.46 5H.54L4 0z" fill={active && sortDir === 'asc' ? '#818cf8' : '#475569'}/></svg>
+          <svg width="8" height="5" viewBox="0 0 8 5"><path d="M4 5L.54 0H7.46L4 5z" fill={active && sortDir === 'desc' ? '#818cf8' : '#475569'}/></svg>
         </span>
       </div>
     </th>
   );
 }
 
+/* ── Permission Badge ───────────────────────────────────────── */
+function PermBadge({ canAdd, canEdit, canDelete }) {
+  if (canAdd && canEdit && canDelete) return null; // full access — show nothing
+  return (
+    <div className="gm-perm-badges">
+      <Ico.Lock />
+      <span>
+        {!canAdd    && <span className="gm-perm-no">No Add</span>}
+        {!canEdit   && <span className="gm-perm-no">No Edit</span>}
+        {!canDelete && <span className="gm-perm-no">No Delete</span>}
+      </span>
+    </div>
+  );
+}
+
+/* ── Form Modal ─────────────────────────────────────────────── */
 const EMPTY_FORM = { code: '', name: '', shortName: '' };
 
 function FormModal({ title, mode, initial, onSave, onClose, saving, saveError }) {
@@ -60,8 +86,8 @@ function FormModal({ title, mode, initial, onSave, onClose, saving, saveError })
 
   const validate = () => {
     const e = {};
-    if (!form.code.trim()) e.code = 'Code is required';
-    if (!form.name.trim()) e.name = 'Name is required';
+    if (!form.code.trim())  e.code  = 'Code is required';
+    if (!form.name.trim())  e.name  = 'Name is required';
     return e;
   };
 
@@ -74,24 +100,30 @@ function FormModal({ title, mode, initial, onSave, onClose, saving, saveError })
 
   return (
     <div className="gm-overlay" onClick={onClose}>
-      <div className="gm-modal" onClick={e => e.stopPropagation()} role="dialog" aria-modal="true">
+      <div className="gm-modal" onClick={e => e.stopPropagation()} role="dialog" aria-modal="true"
+        aria-label={`${mode === 'add' ? 'Add' : 'Edit'} ${title}`}>
         <button className="gm-modal-close" onClick={onClose} aria-label="Close"><Ico.Close /></button>
         <h2 className="gm-modal-title">{mode === 'add' ? 'Add' : 'Edit'} {title}</h2>
+
         {saveError && <div className="gm-modal-error">⚠ {saveError}</div>}
+
         <form onSubmit={onSubmit} noValidate>
           <div className="gm-field">
             <label className="gm-label">Code <span className="gm-req">*</span></label>
-            <input name="code" type="text" className={`gm-input ${errors.code ? 'error' : ''}`} placeholder="Enter code" value={form.code} onChange={onChange} autoFocus />
+            <input name="code" type="text" className={`gm-input ${errors.code ? 'error' : ''}`}
+              placeholder="Enter code" value={form.code} onChange={onChange} autoFocus />
             {errors.code && <div className="gm-field-err">{errors.code}</div>}
           </div>
           <div className="gm-field">
             <label className="gm-label">Name <span className="gm-req">*</span></label>
-            <input name="name" type="text" className={`gm-input ${errors.name ? 'error' : ''}`} placeholder="Enter name" value={form.name} onChange={onChange} />
+            <input name="name" type="text" className={`gm-input ${errors.name ? 'error' : ''}`}
+              placeholder="Enter name" value={form.name} onChange={onChange} />
             {errors.name && <div className="gm-field-err">{errors.name}</div>}
           </div>
           <div className="gm-field">
             <label className="gm-label">Short Name</label>
-            <input name="shortName" type="text" className="gm-input" placeholder="Optional" value={form.shortName} onChange={onChange} />
+            <input name="shortName" type="text" className="gm-input"
+              placeholder="Optional" value={form.shortName} onChange={onChange} />
           </div>
           <div className="gm-modal-footer">
             <button type="submit" className="gm-btn-save" disabled={saving}>
@@ -105,6 +137,7 @@ function FormModal({ title, mode, initial, onSave, onClose, saving, saveError })
   );
 }
 
+/* ── Confirm Delete Modal ───────────────────────────────────── */
 function ConfirmModal({ title, item, onConfirm, onClose, deleting }) {
   return (
     <div className="gm-overlay" onClick={onClose}>
@@ -112,7 +145,10 @@ function ConfirmModal({ title, item, onConfirm, onClose, deleting }) {
         <button className="gm-modal-close" onClick={onClose}><Ico.Close /></button>
         <div className="gm-confirm-emoji">🗑️</div>
         <h3 className="gm-confirm-title">Delete {title}</h3>
-        <p className="gm-confirm-msg">Are you sure you want to delete <strong>{item?.name}</strong>?<br />This action cannot be undone.</p>
+        <p className="gm-confirm-msg">
+          Are you sure you want to delete <strong>{item?.name}</strong>?<br />
+          This action cannot be undone.
+        </p>
         <div className="gm-confirm-actions">
           <button className="gm-btn-danger" onClick={onConfirm} disabled={deleting}>
             {deleting ? <><span className="gm-spinner-sm" />Deleting...</> : 'Yes, Delete'}
@@ -124,7 +160,14 @@ function ConfirmModal({ title, item, onConfirm, onClose, deleting }) {
   );
 }
 
+/* ═══════════════════════════════════════════════════════════
+   MAIN GeneralMaster
+   ═══════════════════════════════════════════════════════════ */
 export default function GeneralMaster({ gtypeuid, title }) {
+  // ── Permission hook ──────────────────────────────────────
+  const { canAdd, canEdit, canDelete, loaded: permLoaded } = usePermissions(title);
+
+  // ── Data state ───────────────────────────────────────────
   const [rows, setRows]         = useState([]);
   const [loading, setLoading]   = useState(true);
   const [loadError, setLoadErr] = useState('');
@@ -132,19 +175,23 @@ export default function GeneralMaster({ gtypeuid, title }) {
   const [search, setSearch]     = useState('');
   const [sortField, setSortField] = useState(null);
   const [sortDir,   setSortDir]   = useState('asc');
+
+  // ── Modal state ──────────────────────────────────────────
   const [modal,    setModal]    = useState(null);
   const [editRow,  setEditRow]  = useState(null);
   const [saving,   setSaving]   = useState(false);
   const [saveErr,  setSaveErr]  = useState('');
   const [deleteItem, setDeleteItem] = useState(null);
   const [deleting,   setDeleting]   = useState(false);
-  const [toast, setToast] = useState({ msg: '', type: 'success' });
 
+  // ── Toast ────────────────────────────────────────────────
+  const [toast, setToast] = useState({ msg: '', type: 'success' });
   const showToast = (msg, type = 'success') => {
     setToast({ msg, type });
-    setTimeout(() => setToast({ msg: '', type: 'success' }), 3200);
+    setTimeout(() => setToast({ msg: '', type: 'success' }), 3500);
   };
 
+  /* ── Load data ── */
   const load = useCallback(async () => {
     setLoading(true); setLoadErr('');
     try {
@@ -159,6 +206,7 @@ export default function GeneralMaster({ gtypeuid, title }) {
   useEffect(() => { load(); }, [load]);
   useEffect(() => { setSearch(''); setSortField(null); }, [gtypeuid]);
 
+  /* ── Derived: filter + sort ── */
   const displayRows = useMemo(() => {
     let list = rows;
     if (search.trim()) {
@@ -186,8 +234,21 @@ export default function GeneralMaster({ gtypeuid, title }) {
     else { setSortField(field); setSortDir('asc'); }
   };
 
-  const openAdd  = () => { setSaveErr(''); setModal('add');  setEditRow(null); };
-  const openEdit = (row) => { setSaveErr(''); setEditRow(row); setModal('edit'); };
+  /* ── CRUD handlers ── */
+  const openAdd = () => {
+    if (!canAdd) { showToast('You do not have permission to add records.', 'warn'); return; }
+    setSaveErr(''); setModal('add'); setEditRow(null);
+  };
+
+  const openEdit = (row) => {
+    if (!canEdit) { showToast('You do not have permission to edit records.', 'warn'); return; }
+    setSaveErr(''); setEditRow(row); setModal('edit');
+  };
+
+  const confirmDelete = (row) => {
+    if (!canDelete) { showToast('You do not have permission to delete records.', 'warn'); return; }
+    setDeleteItem(row);
+  };
 
   const handleSave = async (form) => {
     setSaveErr(''); setSaving(true);
@@ -197,12 +258,8 @@ export default function GeneralMaster({ gtypeuid, title }) {
       else                  res = await updateGeneral({ type: gtypeuid, id: editRow.id, ...form });
 
       const msg = res.message || (modal === 'add' ? 'Saved successfully.' : 'Updated successfully.');
-      // If backend says code already exists, show as inline error not toast
       if (msg.toLowerCase().includes('already exists')) { setSaveErr(msg); return; }
-
-      showToast(msg);
-      setModal(null);
-      load();
+      showToast(msg); setModal(null); load();
     } catch (err) {
       setSaveErr(err.response?.data?.message || 'Operation failed.');
     } finally { setSaving(false); }
@@ -214,8 +271,7 @@ export default function GeneralMaster({ gtypeuid, title }) {
     try {
       const res = await deleteGeneral({ type: gtypeuid, id: deleteItem.id });
       showToast(res.message || 'Deleted successfully.');
-      setDeleteItem(null);
-      load();
+      setDeleteItem(null); load();
     } catch (err) {
       showToast(err.response?.data?.message || 'Delete failed.', 'error');
       setDeleteItem(null);
@@ -234,31 +290,37 @@ export default function GeneralMaster({ gtypeuid, title }) {
 
       {modal && (
         <FormModal title={title} mode={modal}
-          initial={modal === 'edit' ? { code: editRow.code, name: editRow.name, shortName: editRow.shortName || '' } : EMPTY_FORM}
+          initial={modal === 'edit'
+            ? { code: editRow.code, name: editRow.name, shortName: editRow.shortName || '' }
+            : EMPTY_FORM}
           onSave={handleSave} onClose={() => setModal(null)}
           saving={saving} saveError={saveErr} />
       )}
       {deleteItem && (
         <ConfirmModal title={title} item={deleteItem}
-          onConfirm={handleDelete} onClose={() => setDeleteItem(null)} deleting={deleting} />
+          onConfirm={handleDelete} onClose={() => setDeleteItem(null)}
+          deleting={deleting} />
       )}
 
-      {/* Header */}
+      {/* ── Page header ── */}
       <div className="gm-page-header">
         <div>
           <h1 className="gm-page-title">{title} List</h1>
           <p className="gm-page-subtitle">
             {isActive ? 'Showing active records' : 'Showing inactive records'}
+            {permLoaded && <PermBadge canAdd={canAdd} canEdit={canEdit} canDelete={canDelete} />}
           </p>
         </div>
-        {isActive && (
+
+        {/* ── Add button: hidden when mWrite = 0 ── */}
+        {isActive && canAdd && (
           <button className="gm-btn-add" onClick={openAdd}>
             <Ico.Plus /> Add New Record
           </button>
         )}
       </div>
 
-      {/* Controls */}
+      {/* ── Controls ── */}
       <div className="gm-controls">
         <Toggle checked={isActive} onChange={() => setIsActive(v => !v)} />
         <div className="gm-controls-right">
@@ -276,12 +338,10 @@ export default function GeneralMaster({ gtypeuid, title }) {
 
       {loadError && <div className="gm-alert-error">⚠ {loadError}</div>}
 
-      {/* Table */}
+      {/* ── Table ── */}
       <div className="gm-table-wrap">
         {loading ? (
-          <div className="gm-loading">
-            <div className="gm-spinner" /><span>Loading {title}...</span>
-          </div>
+          <div className="gm-loading"><div className="gm-spinner" /><span>Loading {title}...</span></div>
         ) : (
           <table className="gm-table">
             <thead>
@@ -296,7 +356,9 @@ export default function GeneralMaster({ gtypeuid, title }) {
             <tbody>
               {displayRows.length === 0 ? (
                 <tr><td colSpan={4} className="gm-empty">
-                  {search ? `No results for "${search}".` : `No ${isActive ? 'active' : 'inactive'} records.`}
+                  {search
+                    ? `No results for "${search}".`
+                    : `No ${isActive ? 'active' : 'inactive'} records found.`}
                 </td></tr>
               ) : (
                 displayRows.map(row => (
@@ -307,8 +369,33 @@ export default function GeneralMaster({ gtypeuid, title }) {
                     <td className="gm-td gm-td-actions">
                       {isActive ? (
                         <>
-                          <button className="gm-icon-btn gm-icon-edit" onClick={() => openEdit(row)} title={`Edit ${row.name}`}><Ico.Edit /></button>
-                          <button className="gm-icon-btn gm-icon-delete" onClick={() => setDeleteItem(row)} title={`Delete ${row.name}`}><Ico.Trash /></button>
+                          {/* Edit icon: shown only when mUpdate = 1 */}
+                          {canEdit ? (
+                            <button className="gm-icon-btn gm-icon-edit"
+                              onClick={() => openEdit(row)}
+                              title={`Edit ${row.name}`}
+                              aria-label={`Edit ${row.name}`}>
+                              <Ico.Edit />
+                            </button>
+                          ) : (
+                            <span className="gm-icon-btn gm-icon-locked" title="No edit permission">
+                              <Ico.Lock />
+                            </span>
+                          )}
+
+                          {/* Delete icon: shown only when mDelete = 1 */}
+                          {canDelete ? (
+                            <button className="gm-icon-btn gm-icon-delete"
+                              onClick={() => confirmDelete(row)}
+                              title={`Delete ${row.name}`}
+                              aria-label={`Delete ${row.name}`}>
+                              <Ico.Trash />
+                            </button>
+                          ) : (
+                            <span className="gm-icon-btn gm-icon-locked" title="No delete permission">
+                              <Ico.Lock />
+                            </span>
+                          )}
                         </>
                       ) : (
                         <span className="gm-inactive-badge">Inactive</span>
@@ -322,6 +409,7 @@ export default function GeneralMaster({ gtypeuid, title }) {
         )}
       </div>
 
+      {/* Footer */}
       {!loading && (
         <div className="gm-footer">
           {displayRows.length !== rows.length

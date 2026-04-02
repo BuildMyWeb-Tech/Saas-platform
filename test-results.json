@@ -1,0 +1,127 @@
+{
+  "timestamp": "2026-04-02T09:20:43.021Z",
+  "target": "http://localhost:5000",
+  "summary": {
+    "passed": 20,
+    "failed": 0,
+    "warned": 2,
+    "total": 22
+  },
+  "results": [
+    {
+      "status": "✅",
+      "label": "Server is running",
+      "detail": "env: undefined"
+    },
+    {
+      "status": "✅",
+      "label": "Admin login successful",
+      "detail": "userId=2"
+    },
+    {
+      "status": "✅",
+      "label": "SA login successful",
+      "detail": "userId=1"
+    },
+    {
+      "status": "✅",
+      "label": "Invalid credentials correctly rejected",
+      "detail": ""
+    },
+    {
+      "status": "✅",
+      "label": "Menu API returned successfully",
+      "detail": "7 groups"
+    },
+    {
+      "status": "✅",
+      "label": "Setup menu group found",
+      "detail": ""
+    },
+    {
+      "status": "✅",
+      "label": "Department permissions present in menu response",
+      "detail": "mWrite=0 mUpdate=0 mDelete=0"
+    },
+    {
+      "status": "⚠️ ",
+      "label": "Admin does not have full permissions — check SP",
+      "detail": "{\"mWrite\":0,\"mUpdate\":0,\"mDelete\":0}"
+    },
+    {
+      "status": "✅",
+      "label": "SA has Department in menu",
+      "detail": "{\"mWrite\":0,\"mUpdate\":0,\"mDelete\":0}"
+    },
+    {
+      "status": "✅",
+      "label": "SA correctly has mUpdate=0 (no edit permission)",
+      "detail": ""
+    },
+    {
+      "status": "✅",
+      "label": "SA has restricted: mWrite=0 mDelete=0",
+      "detail": ""
+    },
+    {
+      "status": "✅",
+      "label": "Admin can CREATE department",
+      "detail": "code=TST8104"
+    },
+    {
+      "status": "⚠️ ",
+      "label": "Created record not found in active list — may be a timing issue",
+      "detail": ""
+    },
+    {
+      "status": "✅",
+      "label": "Inactive list (tag=0) returned",
+      "detail": "7 records"
+    },
+    {
+      "status": "✅",
+      "label": "SA mUpdate=0 confirmed — frontend should hide Edit icon",
+      "detail": ""
+    },
+    {
+      "status": "ℹ️ ",
+      "label": "Frontend: usePermissions(\"Department\").canEdit === false → Edit icon hidden ✅",
+      "detail": ""
+    },
+    {
+      "status": "✅",
+      "label": "SA mWrite=0 confirmed — frontend should hide Add New Record button",
+      "detail": ""
+    },
+    {
+      "status": "✅",
+      "label": "SA mDelete=0 confirmed — frontend should hide Delete icon",
+      "detail": ""
+    },
+    {
+      "status": "✅",
+      "label": "GET /api/general/1 (Department) OK",
+      "detail": "5 records"
+    },
+    {
+      "status": "✅",
+      "label": "GET /api/general/2 (Designation) OK",
+      "detail": "2 records"
+    },
+    {
+      "status": "✅",
+      "label": "GET /api/general/3 (Employees) OK",
+      "detail": "1 records"
+    },
+    {
+      "status": "✅",
+      "label": "GET /api/general/4 (Machines) OK",
+      "detail": "1 records"
+    },
+    {
+      "status": "✅",
+      "label": "GET /api/general/5 (Process) OK",
+      "detail": "1 records"
+    }
+  ]
+}
