@@ -1,5 +1,3 @@
-
-C:\Users\ajaik\Desktop\Saas-platform>node show-structure.js
 📁 .git
 📁 backend
    📄 .env
@@ -101,7 +99,10 @@ C:\Users\ajaik\Desktop\Saas-platform>node show-structure.js
          📄 generalService.js
    📄 vercel.json
    📄 vite.config.js
+📄 GeneralMaster.postman_collection.json
 📄 Mr Press Management API.postman_collection.json
 📄 OREADME.md
 📄 Readme.MD
 📄 show-structure.js
+📄 test-permissions.js
+📄 test-results.json

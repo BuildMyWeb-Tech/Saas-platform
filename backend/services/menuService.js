@@ -28,16 +28,16 @@ async function getGroupedMenus(userId) {
       row.id;
 
     // ✅ PERMISSIONS (if available later)
-    // const mWrite  = Number(row.MWrite ?? 0);
-    // const mUpdate = Number(row.MUpdate ?? 0);
-    // const mDelete = Number(row.MDelete ?? 0);
+    const mWrite  = Number(row.MWrite ?? 0);
+    const mUpdate = Number(row.MUpdate ?? 0);
+    const mDelete = Number(row.MDelete ?? 0);
 
 
-const isAdmin = Number(userId) === 2;
+// const isAdmin = Number(userId) === 2;
 
-const mWrite  = isAdmin ? 1 : Number(row.MWrite ?? 0);
-const mUpdate = isAdmin ? 1 : Number(row.MUpdate ?? 0);
-const mDelete = isAdmin ? 1 : Number(row.MDelete ?? 0);    
+// const mWrite  = isAdmin ? 1 : Number(row.MWrite ?? 0);
+// const mUpdate = isAdmin ? 1 : Number(row.MUpdate ?? 0);
+// const mDelete = isAdmin ? 1 : Number(row.MDelete ?? 0);    
 
 
     if (!subName) continue;

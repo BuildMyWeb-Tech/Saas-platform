@@ -1,5 +1,11 @@
 // src/components/GeneralMaster.jsx
-// Reusable CRUD master — respects mWrite / mUpdate / mDelete permissions
+// Reusable CRUD master — respects mWrite / mUpdate / mDelete permissions from API
+// Changes:
+//   • Removed PermBadge (no badges shown)
+//   • Toggle label shows only "Active" / "Inactive" — no "Show:" prefix
+//   • Edit / Delete icons are HIDDEN (not locked) when user lacks permission
+//   • Add button hidden when mWrite = 0 (unchanged)
+//   • All permissions come from API via usePermissions hook (no hardcoding)
 
 import React, { useEffect, useState, useCallback, useMemo } from 'react';
 import { fetchGeneral, createGeneral, updateGeneral, deleteGeneral } from '../services/generalService';
@@ -12,7 +18,6 @@ const Ico = {
   Plus:   () => (<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>),
   Close:  () => (<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>),
   Search: () => (<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>),
-  Lock:   () => (<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0110 0v4"/></svg>),
 };
 
 /* ── Toast ─────────────────────────────────────────────────── */
@@ -27,14 +32,25 @@ function Toast({ toast }) {
 }
 
 /* ── Toggle ────────────────────────────────────────────────── */
+// Shows only the state label ("Active" or "Inactive") — no "Show:" prefix
 function Toggle({ checked, onChange }) {
   return (
-    <div className="gm-toggle-wrap" onClick={onChange} role="switch" aria-checked={checked}
-      tabIndex={0} onKeyDown={e => e.key === ' ' && onChange()}>
-      <span className="gm-toggle-label">Show:</span>
-      <div className={`gm-toggle ${checked ? 'on' : 'off'}`}><div className="gm-toggle-knob" /></div>
+    <div
+      className="gm-toggle-wrap"
+      onClick={onChange}
+      role="switch"
+      aria-checked={checked}
+      tabIndex={0}
+      onKeyDown={e => e.key === ' ' && onChange()}
+    >
       <span className={`gm-toggle-state ${checked ? 'active-state' : 'inactive-state'}`}>
-        {checked ? 'Active' : 'Inactive'}
+        {'Inactive'}
+      </span>
+      <div className={`gm-toggle ${checked ? 'on' : 'off'}`}>
+        <div className="gm-toggle-knob" />
+      </div>
+      <span className={`gm-toggle-state ${checked ? 'active-state' : 'inactive-state'}`}>
+        {'Active'}
       </span>
     </div>
   );
@@ -56,21 +72,6 @@ function SortTh({ label, field, sortField, sortDir, onSort }) {
   );
 }
 
-/* ── Permission Badge ───────────────────────────────────────── */
-function PermBadge({ canAdd, canEdit, canDelete }) {
-  if (canAdd && canEdit && canDelete) return null; // full access — show nothing
-  return (
-    <div className="gm-perm-badges">
-      <Ico.Lock />
-      <span>
-        {!canAdd    && <span className="gm-perm-no">No Add</span>}
-        {!canEdit   && <span className="gm-perm-no">No Edit</span>}
-        {!canDelete && <span className="gm-perm-no">No Delete</span>}
-      </span>
-    </div>
-  );
-}
-
 /* ── Form Modal ─────────────────────────────────────────────── */
 const EMPTY_FORM = { code: '', name: '', shortName: '' };
 
@@ -86,8 +87,8 @@ function FormModal({ title, mode, initial, onSave, onClose, saving, saveError })
 
   const validate = () => {
     const e = {};
-    if (!form.code.trim())  e.code  = 'Code is required';
-    if (!form.name.trim())  e.name  = 'Name is required';
+    if (!form.code.trim()) e.code = 'Code is required';
+    if (!form.name.trim()) e.name = 'Name is required';
     return e;
   };
 
@@ -164,23 +165,27 @@ function ConfirmModal({ title, item, onConfirm, onClose, deleting }) {
    MAIN GeneralMaster
    ═══════════════════════════════════════════════════════════ */
 export default function GeneralMaster({ gtypeuid, title }) {
-  // ── Permission hook ──────────────────────────────────────
-  const { canAdd, canEdit, canDelete, loaded: permLoaded } = usePermissions(title);
+  // ── Permissions from API (via menu response → AuthContext) ──
+  // canAdd    = mWrite  === 1
+  // canEdit   = mUpdate === 1
+  // canDelete = mDelete === 1
+  // All sourced from DB — zero hardcoding
+  const { canAdd, canEdit, canDelete } = usePermissions(title);
 
   // ── Data state ───────────────────────────────────────────
-  const [rows, setRows]         = useState([]);
-  const [loading, setLoading]   = useState(true);
-  const [loadError, setLoadErr] = useState('');
-  const [isActive, setIsActive] = useState(true);
-  const [search, setSearch]     = useState('');
+  const [rows, setRows]           = useState([]);
+  const [loading, setLoading]     = useState(true);
+  const [loadError, setLoadErr]   = useState('');
+  const [isActive, setIsActive]   = useState(true);
+  const [search, setSearch]       = useState('');
   const [sortField, setSortField] = useState(null);
   const [sortDir,   setSortDir]   = useState('asc');
 
   // ── Modal state ──────────────────────────────────────────
-  const [modal,    setModal]    = useState(null);
-  const [editRow,  setEditRow]  = useState(null);
-  const [saving,   setSaving]   = useState(false);
-  const [saveErr,  setSaveErr]  = useState('');
+  const [modal,      setModal]      = useState(null);
+  const [editRow,    setEditRow]    = useState(null);
+  const [saving,     setSaving]     = useState(false);
+  const [saveErr,    setSaveErr]    = useState('');
   const [deleteItem, setDeleteItem] = useState(null);
   const [deleting,   setDeleting]   = useState(false);
 
@@ -191,7 +196,9 @@ export default function GeneralMaster({ gtypeuid, title }) {
     setTimeout(() => setToast({ msg: '', type: 'success' }), 3500);
   };
 
-  /* ── Load data ── */
+  /* ── Load data using SP: PR_GetGeneralMData_FrontGrid @Gtypeuid, @Tag ── */
+  // isActive=true  → tag=1 → active records
+  // isActive=false → tag=0 → inactive records
   const load = useCallback(async () => {
     setLoading(true); setLoadErr('');
     try {
@@ -236,17 +243,14 @@ export default function GeneralMaster({ gtypeuid, title }) {
 
   /* ── CRUD handlers ── */
   const openAdd = () => {
-    if (!canAdd) { showToast('You do not have permission to add records.', 'warn'); return; }
     setSaveErr(''); setModal('add'); setEditRow(null);
   };
 
   const openEdit = (row) => {
-    if (!canEdit) { showToast('You do not have permission to edit records.', 'warn'); return; }
     setSaveErr(''); setEditRow(row); setModal('edit');
   };
 
   const confirmDelete = (row) => {
-    if (!canDelete) { showToast('You do not have permission to delete records.', 'warn'); return; }
     setDeleteItem(row);
   };
 
@@ -306,13 +310,13 @@ export default function GeneralMaster({ gtypeuid, title }) {
       <div className="gm-page-header">
         <div>
           <h1 className="gm-page-title">{title} List</h1>
+          {/* Subtitle — no permission badges, just record state */}
           <p className="gm-page-subtitle">
             {isActive ? 'Showing active records' : 'Showing inactive records'}
-            {permLoaded && <PermBadge canAdd={canAdd} canEdit={canEdit} canDelete={canDelete} />}
           </p>
         </div>
 
-        {/* ── Add button: hidden when mWrite = 0 ── */}
+        {/* Add button: visible ONLY when mWrite = 1 (from API) AND viewing active records */}
         {isActive && canAdd && (
           <button className="gm-btn-add" onClick={openAdd}>
             <Ico.Plus /> Add New Record
@@ -322,13 +326,22 @@ export default function GeneralMaster({ gtypeuid, title }) {
 
       {/* ── Controls ── */}
       <div className="gm-controls">
+        {/*
+          Toggle: clicking switches between Active (tag=1) and Inactive (tag=0) data load.
+          Label shows current state: "Active" or "Inactive" — no "Show:" prefix.
+        */}
         <Toggle checked={isActive} onChange={() => setIsActive(v => !v)} />
+
         <div className="gm-controls-right">
           <div className="gm-search-wrap">
             <span className="gm-search-icon"><Ico.Search /></span>
-            <input type="text" className="gm-search-input"
-              placeholder={`Search ${title}...`} value={search}
-              onChange={e => setSearch(e.target.value)} />
+            <input
+              type="text"
+              className="gm-search-input"
+              placeholder={`Search ${title}...`}
+              value={search}
+              onChange={e => setSearch(e.target.value)}
+            />
             {search && (
               <button className="gm-search-clear" onClick={() => setSearch('')}><Ico.Close /></button>
             )}
@@ -369,32 +382,45 @@ export default function GeneralMaster({ gtypeuid, title }) {
                     <td className="gm-td gm-td-actions">
                       {isActive ? (
                         <>
-                          {/* Edit icon: shown only when mUpdate = 1 */}
-                          {canEdit ? (
-                            <button className="gm-icon-btn gm-icon-edit"
+                          {/*
+                            Edit icon:
+                            - SHOWN and clickable  → mUpdate = 1  (canEdit true)
+                            - HIDDEN entirely      → mUpdate = 0  (canEdit false)
+                            No lock icon, no disabled state — just absent.
+                          */}
+                          {canEdit && (
+                            <button
+                              className="gm-icon-btn gm-icon-edit"
                               onClick={() => openEdit(row)}
                               title={`Edit ${row.name}`}
-                              aria-label={`Edit ${row.name}`}>
+                              aria-label={`Edit ${row.name}`}
+                            >
                               <Ico.Edit />
                             </button>
-                          ) : (
-                            <span className="gm-icon-btn gm-icon-locked" title="No edit permission">
-                              <Ico.Lock />
-                            </span>
                           )}
 
-                          {/* Delete icon: shown only when mDelete = 1 */}
-                          {canDelete ? (
-                            <button className="gm-icon-btn gm-icon-delete"
+                          {/*
+                            Delete icon:
+                            - SHOWN and clickable  → mDelete = 1  (canDelete true)
+                            - HIDDEN entirely      → mDelete = 0  (canDelete false)
+                          */}
+                          {canDelete && (
+                            <button
+                              className="gm-icon-btn gm-icon-delete"
                               onClick={() => confirmDelete(row)}
                               title={`Delete ${row.name}`}
-                              aria-label={`Delete ${row.name}`}>
+                              aria-label={`Delete ${row.name}`}
+                            >
                               <Ico.Trash />
                             </button>
-                          ) : (
-                            <span className="gm-icon-btn gm-icon-locked" title="No delete permission">
-                              <Ico.Lock />
-                            </span>
+                          )}
+
+                          {/*
+                            If user has neither edit nor delete, show a subtle dash
+                            so the ACTION column isn't completely empty.
+                          */}
+                          {!canEdit && !canDelete && (
+                            <span className="gm-no-actions">—</span>
                           )}
                         </>
                       ) : (

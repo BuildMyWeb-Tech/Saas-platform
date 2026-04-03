@@ -3,13 +3,28 @@ import fs from "fs";
 import path from "path";
 
 function showTree(dir, indent = "") {
+    let output = "";
+
     for (const item of fs.readdirSync(dir)) {
         if (item === "node_modules") continue;
+
         const fullPath = path.join(dir, item);
         const stats = fs.statSync(fullPath);
-        console.log(indent + (stats.isDirectory() ? "📁 " : "📄 ") + item);
-        if (stats.isDirectory()) showTree(fullPath, indent + "   ");
+
+        const line = indent + (stats.isDirectory() ? "📁 " : "📄 ") + item + "\n";
+        output += line;
+
+        if (stats.isDirectory()) {
+            output += showTree(fullPath, indent + "   ");
+        }
     }
+
+    return output;
 }
 
-showTree(".");
+const tree = showTree(".");
+
+// Write (or overwrite) file
+fs.writeFileSync("folder.txt", tree, "utf-8");
+
+console.log("✅ Folder structure saved to folder.txt");
