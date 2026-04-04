@@ -1,4 +1,7 @@
 // src/pages/Login.jsx
+// Logo image: place your logo PNG at  frontend/public/brand/logo.png
+// It will be served at URL: /brand/logo.png
+
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { loginUser } from '../services/authService';
@@ -9,12 +12,12 @@ export default function Login() {
   const [params] = useSearchParams();
   const { login, isAuthenticated } = useAuth();
 
-  const [form, setForm]          = useState({ username: '', password: '' });
-  const [errors, setErrors]      = useState({});
+  const [form, setForm]       = useState({ username: '', password: '' });
+  const [errors, setErrors]   = useState({});
   const [serverError, setServer] = useState('');
   const [sessionMsg, setSession] = useState('');
-  const [showPw, setShowPw]      = useState(false);
-  const [loading, setLoading]    = useState(false);
+  const [showPw, setShowPw]   = useState(false);
+  const [loading, setLoading] = useState(false);
 
   useEffect(() => {
     if (isAuthenticated) navigate('/dashboard', { replace: true });
@@ -61,12 +64,29 @@ export default function Login() {
 
   return (
     <div className="login-page">
-      {/* Left brand panel */}
+
+      {/* ── Left brand panel ── */}
       <div className="login-brand">
         <div className="login-brand-inner">
+
+          {/* Logo: image first, SVG fallback if image missing */}
           <div className="login-logo">
             <div className="login-logo-icon">
-              <svg width="28" height="28" viewBox="0 0 28 28" fill="none">
+              <img
+                src="/brand/logo.png"
+                alt="Mr. Press Management"
+                className="login-logo-img"
+                onError={e => {
+                  // Fallback to SVG icon if logo.png not found
+                  e.currentTarget.style.display = 'none';
+                  e.currentTarget.nextSibling.style.display = 'block';
+                }}
+              />
+              {/* SVG fallback (hidden by default, shown if logo.png missing) */}
+              <svg
+                width="28" height="28" viewBox="0 0 28 28" fill="none"
+                style={{ display: 'none' }}
+              >
                 <rect width="28" height="28" rx="6" fill="white" fillOpacity="0.15"/>
                 <path d="M7 8h14M7 14h10M7 20h12" stroke="white" strokeWidth="2" strokeLinecap="round"/>
               </svg>
@@ -101,14 +121,26 @@ export default function Login() {
         </div>
       </div>
 
-      {/* Right form panel */}
+      {/* ── Right form panel ── */}
       <div className="login-form-panel">
         <div className="login-form-card">
 
-          {/* Mobile logo */}
+          {/* Mobile logo — shown only on small screens via CSS */}
           <div className="login-mobile-logo">
             <div className="login-logo-icon-sm">
-              <svg width="20" height="20" viewBox="0 0 28 28" fill="none">
+              <img
+                src="/brand/logo.png"
+                alt="Mr. Press"
+                className="login-logo-img-sm"
+                onError={e => {
+                  e.currentTarget.style.display = 'none';
+                  e.currentTarget.nextSibling.style.display = 'block';
+                }}
+              />
+              <svg
+                width="20" height="20" viewBox="0 0 28 28" fill="none"
+                style={{ display: 'none' }}
+              >
                 <path d="M7 8h14M7 14h10M7 20h12" stroke="white" strokeWidth="2.5" strokeLinecap="round"/>
               </svg>
             </div>
@@ -187,10 +219,7 @@ export default function Login() {
 
             <button type="submit" className="login-submit-btn" disabled={loading}>
               {loading ? (
-                <>
-                  <span className="login-btn-spinner" />
-                  Signing in...
-                </>
+                <><span className="login-btn-spinner" />Signing in...</>
               ) : 'Sign In'}
             </button>
           </form>

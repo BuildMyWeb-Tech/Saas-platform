@@ -5,26 +5,27 @@ import { useAuth } from '../context/AuthContext';
 import { getDashboard, getMenus } from '../services/authService';
 
 export default function Dashboard() {
-  const { userId, username } = useAuth();
+  const { userId, username, permissionMap } = useAuth();
   const navigate = useNavigate();
 
   const [stats, setStats]     = useState(null);
   const [menus, setMenus]     = useState([]);
   const [loading, setLoading] = useState(true);
+  const [loaded, setLoaded] = useState(false);
 
-  useEffect(() => {
-    if (!userId) return;
-    Promise.all([
-      getDashboard(userId),
-      getMenus(userId),
-    ])
-      .then(([dashRes, menuRes]) => {
-        if (dashRes.success) setStats(dashRes.data);
-        if (menuRes.success) setMenus(menuRes.data);
-      })
-      .catch(console.error)
-      .finally(() => setLoading(false));
-  }, [userId]);
+ useEffect(() => {
+  if (!userId || loaded) return;
+
+  getDashboard(userId)
+    .then((res) => {
+      if (res.success) setStats(res.data);
+    })
+    .finally(() => {
+      setLoading(false);
+      setLoaded(true); // ✅ prevents re-call
+    });
+
+}, [userId, loaded]);
 
   const greeting = () => {
     const h = new Date().getHours();

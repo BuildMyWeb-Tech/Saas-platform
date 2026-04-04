@@ -219,7 +219,18 @@ button,input,select,textarea{font-family:var(--font);}
 /* Table */
 .gm-table-wrap{background:var(--grid-bg);border:1px solid var(--grid-border);border-radius:var(--r-lg);overflow:hidden;overflow-x:auto;-webkit-overflow-scrolling:touch;}
 .gm-table{width:100%;border-collapse:collapse;min-width:480px;}
-.gm-th{padding:11px 16px;background:var(--grid-bg-hd);border-bottom:1px solid var(--grid-border);font-size:11px;font-weight:700;letter-spacing:0.6px;text-transform:uppercase;color:#64748b;white-space:nowrap;}
+.gm-th{
+  padding: 12px 16px;
+  background: var(--grid-bg-hd);
+  border-bottom: 1px solid var(--grid-border);
+  /* border-bottom: 2px solid #cbd5f5; */
+  font-size: 14px;     /* ⬅️ increased from 11px */
+  font-weight: 800;    /* ⬅️ more bold */
+  letter-spacing: 0.8px; /* optional for better clarity */
+  text-transform: uppercase;
+  color:var(--grid-accent);      /* slightly darker for readability */
+  white-space: nowrap;
+}
 .gm-th-sortable{cursor:pointer;user-select:none;border:1.5px solid #7f1d1d;transition:background 0.12s;}
 .gm-th-sortable:hover{background:var(--grid-hover);color:#94a3b8;}
 .gm-th-action{text-align:center;width:90px;border:1.5px solid #7f1d1d;background:var(--grid-bg-hd);}
@@ -337,4 +348,494 @@ button,input,select,textarea{font-family:var(--font);}
 .gm-toast-warn {
   border-left-color: #f59e0b;
   color: #fcd34d;
+}
+
+
+/* ═══════════════════════════════════════════════════════
+   TOGGLE  —  [Inactive] ──●── [Active]
+   Add/replace these rules in your existing CSS file
+   (wherever .gm-toggle-wrap is currently defined)
+═══════════════════════════════════════════════════════ */
+
+.gm-toggle-wrap {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  user-select: none;
+  outline: none;
+}
+
+/* Label shared base */
+.gm-toggle-label {
+  font-size: 13px;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  transition: color 0.2s ease;
+  white-space: nowrap;
+}
+
+/* Selected/highlighted label → blue */
+.gm-toggle-label--on {
+  color: #6366f1;   /* indigo-500 — matches your existing accent */
+}
+
+/* Non-selected label → muted dark */
+.gm-toggle-label--off {
+  color: #64748b;   /* slate-500 */
+}
+
+/* The pill track */
+.gm-toggle-pill {
+  position: relative;
+  width: 44px;
+  height: 24px;
+  border-radius: 9999px;
+  cursor: pointer;
+  transition: background-color 0.25s ease;
+  flex-shrink: 0;
+}
+
+/* Pill colour: active (right) = blue, inactive (left) = slate */
+.gm-toggle-pill--active {
+  background-color: #6366f1;
+}
+
+.gm-toggle-pill--inactive {
+  background-color: #475569;
+}
+
+/* Knob */
+.gm-toggle-knob {
+  position: absolute;
+  top: 3px;
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  background: #ffffff;
+  box-shadow: 0 1px 4px rgba(0,0,0,0.3);
+  transition: left 0.25s ease;
+}
+
+/* Knob position: active → right, inactive → left */
+.gm-toggle-pill--active   .gm-toggle-knob { left: 23px; }
+.gm-toggle-pill--inactive .gm-toggle-knob { left: 3px;  }
+
+/* Hover effects */
+.gm-toggle-pill:hover {
+  opacity: 0.88;
+}
+.gm-toggle-label:hover {
+  opacity: 0.8;
+}
+
+
+/* ═══════════════════════════════════════════════════════
+   LOGO / BRANDING — add these to your existing CSS file
+   (App.css or index.css — wherever your layout styles live)
+═══════════════════════════════════════════════════════ */
+
+/* ── Sidebar logo image ── */
+.app-sidebar-logo-img {
+  display: block;
+  width: 100%;
+  max-width: 160px;
+  height: auto;
+  max-height: 52px;
+  object-fit: contain;
+  margin: 0 auto;
+  /* keep logo visible on dark sidebar background */
+  filter: brightness(0) invert(1);   /* makes any dark logo white */
+  /* Remove the line above if your logo is already white/light */
+}
+
+/* ── Login page logo image ── */
+.login-logo-img {
+  width: 28px;
+  height: 28px;
+  object-fit: contain;
+  display: block;
+  filter: brightness(0) invert(1);
+}
+
+.login-logo-img-sm {
+  width: 20px;
+  height: 20px;
+  object-fit: contain;
+  display: block;
+  filter: brightness(0) invert(1);
+}
+
+/* ── Topbar logo image ── */
+.app-topbar-brand {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-weight: 600;
+  font-size: 15px;
+}
+
+.app-topbar-logo {
+  height: 28px;
+  width: auto;
+  object-fit: contain;
+  display: block;
+  /* Adjust filter based on your topbar background colour:
+     Dark topbar  → filter: brightness(0) invert(1);
+     Light topbar → remove filter entirely             */
+  filter: brightness(0) invert(1);
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+/* ================================================================
+   UI PATCH — paste this at the BOTTOM of your index.css
+   Covers:
+     1. Table cell font size +2px + bold
+     2. Short Name column → white text (same as other columns)
+     3. Topbar brand logo visibility
+     4. User dropdown (avatar + name + Logout / Profile)
+     5. Sidebar collapse/expand toggle with icon-only mode
+   ================================================================ */
+
+
+
+
+/* ── 3. TOPBAR BRAND: logo + text properly visible ──────────── */
+.app-topbar-brand {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--c-text);
+  letter-spacing: -0.3px;
+  white-space: nowrap;
+}
+
+.app-topbar-logo {
+  height: 28px;
+  width: auto;
+  object-fit: contain;
+  display: block;
+  /* Light topbar → no invert; remove filter if logo is already dark */
+  /* filter: brightness(0); */
+}
+
+
+/* ── 4. USER DROPDOWN ───────────────────────────────────────── */
+.topbar-user-wrap {
+  position: relative;
+  flex-shrink: 0;
+}
+
+.topbar-user-btn {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 4px 10px 4px 4px;
+  background: none;
+  border: 1px solid var(--c-border);
+  border-radius: 24px;
+  cursor: pointer;
+  transition: background 0.15s, border-color 0.15s;
+}
+.topbar-user-btn:hover {
+  background: var(--c-bg);
+  border-color: var(--c-border-strong);
+}
+
+.topbar-avatar {
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  background: var(--c-primary);
+  color: #fff;
+  font-size: 11px;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  letter-spacing: 0.5px;
+}
+
+.topbar-username {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--c-text);
+  max-width: 120px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+@media (max-width: 480px) {
+  .topbar-username { display: none; }
+}
+
+.topbar-chevron {
+  color: var(--c-text-3);
+  flex-shrink: 0;
+  transition: transform 0.2s;
+}
+.topbar-chevron.open {
+  transform: rotate(180deg);
+}
+
+/* Dropdown panel */
+.topbar-dropdown {
+  position: absolute;
+  top: calc(100% + 8px);
+  right: 0;
+  min-width: 200px;
+  background: #fff;
+  border: 1px solid var(--c-border);
+  border-radius: var(--r-lg);
+  box-shadow: var(--sh-lg);
+  z-index: 500;
+  animation: fadeUp 0.15s ease;
+  overflow: hidden;
+}
+
+.topbar-dropdown-header {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 14px 16px 12px;
+  background: var(--c-bg);
+}
+
+.topbar-dropdown-avatar {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  background: var(--c-primary);
+  color: #fff;
+  font-size: 13px;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.topbar-dropdown-name {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--c-text);
+  line-height: 1.3;
+}
+.topbar-dropdown-role {
+  font-size: 11px;
+  color: var(--c-text-3);
+  margin-top: 1px;
+}
+
+.topbar-dropdown-divider {
+  height: 1px;
+  background: var(--c-border);
+  margin: 0;
+}
+
+.topbar-dropdown-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  padding: 10px 16px;
+  background: none;
+  border: none;
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--c-text-2);
+  cursor: pointer;
+  text-align: left;
+  transition: background 0.12s, color 0.12s;
+}
+.topbar-dropdown-item:hover {
+  background: var(--c-bg);
+  color: var(--c-text);
+}
+.topbar-dropdown-item--danger {
+  color: var(--c-error);
+}
+.topbar-dropdown-item--danger:hover {
+  background: #fef2f2;
+  color: #b91c1c;
+}
+
+
+/* ── 5. SIDEBAR COLLAPSE / EXPAND ───────────────────────────── */
+
+/* Collapsed sidebar width */
+:root {
+  --sb-w-collapsed: 60px;
+}
+
+/* Layout adjustment when collapsed */
+.app-layout.sidebar-collapsed {
+  grid-template-columns: var(--sb-w-collapsed) 1fr;
+}
+
+/* Collapsed sidebar */
+.app-sidebar--collapsed {
+  width: var(--sb-w-collapsed) !important;
+  min-width: var(--sb-w-collapsed) !important;
+  overflow: visible;   /* allow flyout submenus */
+}
+
+/* Toggle button inside sidebar */
+.sidebar-toggle-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: calc(100% - 16px);
+  margin: 6px 8px 2px;
+  height: 30px;
+  background: rgba(255,255,255,0.05);
+  border: 1px solid var(--sb-border);
+  border-radius: var(--r);
+  color: rgba(255,255,255,0.4);
+  cursor: pointer;
+  transition: background 0.15s, color 0.15s;
+  flex-shrink: 0;
+}
+.sidebar-toggle-btn:hover {
+  background: rgba(255,255,255,0.10);
+  color: rgba(255,255,255,0.85);
+}
+
+/* Collapsed brand area */
+.app-sidebar-brand--collapsed {
+  padding: 14px 0;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  border-bottom: 1px solid var(--sb-border);
+}
+
+.app-logo-icon-only {
+  width: 36px;
+  height: 36px;
+  border-radius: 8px;
+  background: var(--c-primary);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.app-sidebar-logo-img-sm {
+  width: 22px;
+  height: 22px;
+  object-fit: contain;
+  filter: brightness(0) invert(1);
+}
+
+/* Collapsed sidebar icon-only menu items */
+.sidebar-menu-btn--icon {
+  justify-content: center;
+  padding: 9px 0;
+  width: 100%;
+}
+.sidebar-menu-btn--icon .sidebar-menu-icon {
+  width: auto;
+}
+
+/* Collapsed dashboard link */
+.sidebar-dashboard-link--icon {
+  justify-content: center;
+  padding: 9px 0;
+}
+
+/* Flyout submenu for collapsed mode */
+.sidebar-menu-group--collapsed {
+  position: relative;
+}
+
+.sidebar-submenu-flyout {
+  position: absolute;
+  left: calc(var(--sb-w-collapsed) - 4px);
+  top: 0;
+  min-width: 180px;
+  background: #243447;
+  border: 1px solid var(--sb-border);
+  border-radius: var(--r-lg);
+  box-shadow: var(--sh-lg);
+  z-index: 600;
+  padding: 6px;
+  animation: fadeUp 0.15s ease;
+}
+
+.sidebar-flyout-label {
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.8px;
+  text-transform: uppercase;
+  color: rgba(255,255,255,0.35);
+  padding: 4px 10px 8px;
+}
+
+.sidebar-flyout-item {
+  padding: 7px 10px !important;
+  border-radius: var(--r) !important;
+  display: flex;
+  align-items: center;
+}
+
+/* Normal sidebar logo image (expanded) */
+.app-sidebar-logo-img {
+  display: block;
+  height: 36px;
+  width: auto;
+  max-width: 130px;
+  object-fit: contain;
+  filter: brightness(0) invert(1);
+}
+
+/* Sidebar brand row properly aligned (not centered) */
+.app-sidebar-brand {
+  padding: 14px 14px 12px;
+  border-bottom: 1px solid var(--sb-border);
+  flex-shrink: 0;
+}
+
+.app-sidebar-logo {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+/* Mobile: hide collapse toggle (sidebar is overlay) */
+@media (max-width: 1024px) {
+  .sidebar-toggle-btn { display: none; }
+  .app-layout.sidebar-collapsed {
+    grid-template-columns: 1fr;
+  }
+  .app-sidebar--collapsed {
+    width: var(--sb-w) !important;
+  }
 }

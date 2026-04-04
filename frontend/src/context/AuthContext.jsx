@@ -45,21 +45,23 @@ export const AuthProvider = ({ children }) => {
   }, []);
 
   // Hydrate from localStorage on mount
-  useEffect(() => {
-    const stored = getStoredUser();
-    if (stored?.userId) {
-      setState({
-        isAuthenticated: true,
-        isLoading:       false,
-        userId:          stored.userId,
-        username:        stored.username,
-        permissionMap:   {},
-      });
-      loadPermissions(stored.userId);
-    } else {
-      setState(p => ({ ...p, isLoading: false }));
-    }
-  }, [loadPermissions]);
+ useEffect(() => {
+  const stored = getStoredUser();
+
+  if (stored?.userId) {
+    setState({
+      isAuthenticated: true,
+      isLoading: false,
+      userId: stored.userId,
+      username: stored.username,
+      permissionMap: {},
+    });
+
+    loadPermissions(stored.userId); // ✅ only once
+  } else {
+    setState(p => ({ ...p, isLoading: false }));
+  }
+}, []); // ✅ KEEP EMPTY ARRAY
 
   const login = useCallback(async ({ userId, username }) => {
     setState({
