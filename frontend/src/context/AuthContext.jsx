@@ -8,13 +8,14 @@ import { getStoredUser, logout as logoutSvc, getMenus } from '../services/authSe
 const AuthContext = createContext(null);
 
 export const AuthProvider = ({ children }) => {
-  const [state, setState] = useState({
-    isAuthenticated:  false,
-    isLoading:        true,
-    userId:           null,
-    username:         null,
-    permissionMap:    {},   // { "Department": { mWrite, mUpdate, mDelete } }
-  });
+const [state, setState] = useState({
+  isAuthenticated:  false,
+  isLoading:        true,
+  userId:           null,
+  username:         null,
+  permissionMap:    {},
+  menuGroups:       [],   // ← add this
+});
 
   // Build permissionMap from grouped menus response
   const buildPermissionMap = (menuGroups) => {
@@ -32,30 +33,31 @@ export const AuthProvider = ({ children }) => {
   };
 
   // Load permissions after login
-  const loadPermissions = useCallback(async (userId) => {
-    try {
-      const res = await getMenus(userId);
-      if (res.success) {
-        const map = buildPermissionMap(res.data);
-        setState(p => ({ ...p, permissionMap: map }));
-      }
-    } catch (err) {
-      console.warn('Could not load permissions:', err.message);
+const loadPermissions = useCallback(async (userId) => {
+  try {
+    const res = await getMenus(userId);
+    if (res.success) {
+      const map = buildPermissionMap(res.data);
+      setState(p => ({ ...p, permissionMap: map, menuGroups: res.data })); // ← add menuGroups
     }
-  }, []);
+  } catch (err) {
+    console.warn('Could not load permissions:', err.message);
+  }
+}, []);
 
   // Hydrate from localStorage on mount
  useEffect(() => {
   const stored = getStoredUser();
 
   if (stored?.userId) {
-    setState({
-      isAuthenticated: true,
-      isLoading: false,
-      userId: stored.userId,
-      username: stored.username,
-      permissionMap: {},
-    });
+   setState({
+  isAuthenticated: true,
+  isLoading: false,
+  userId: stored.userId,
+  username: stored.username,
+  permissionMap: {},
+  menuGroups: [],   // ← add this
+});
 
     loadPermissions(stored.userId); // ✅ only once
   } else {
@@ -65,19 +67,20 @@ export const AuthProvider = ({ children }) => {
 
   const login = useCallback(async ({ userId, username }) => {
     setState({
-      isAuthenticated: true,
-      isLoading:       false,
-      userId,
-      username,
-      permissionMap:   {},
-    });
+  isAuthenticated: true,
+  isLoading:       false,
+  userId,
+  username,
+  permissionMap:   {},
+  menuGroups:      [],   // ← add this
+});
     // Load permissions immediately after login
     await loadPermissions(userId);
   }, [loadPermissions]);
 
   const logout = useCallback(() => {
     logoutSvc();
-    setState({ isAuthenticated: false, isLoading: false, userId: null, username: null, permissionMap: {} });
+    setState({ isAuthenticated: false, isLoading: false, userId: null, username: null, permissionMap: {}, menuGroups: [] });
   }, []);
 
   return (

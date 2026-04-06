@@ -223,36 +223,18 @@ function UserDropdown({ username, onLogout, onProfile }) {
    MAIN AppLayout
 ═══════════════════════════════════════════════════════════ */
 export default function AppLayout() {
-  const { userId, username, logout } = useAuth();
+  const { userId, username, logout, menuGroups } = useAuth();
+
   const navigate  = useNavigate();
   const location  = useLocation();
 
-  const [menus,       setMenus]       = useState([]);
-  const [menuLoading, setMenuLoading] = useState(true);
+
   const [openGroups,  setOpenGroups]  = useState({});
   const [sidebarOpen, setSidebarOpen] = useState(false);   // mobile overlay
   const [collapsed,   setCollapsed]   = useState(false);   // desktop collapse
 
   /* ── Load menus ── */
-  useEffect(() => {
-    if (!userId) return;
-    getMenus(userId)
-      .then(res => {
-        if (res.success) {
-          setMenus(res.data);
-          const initial = {};
-          res.data.forEach((g, i) => {
-            const hasActive = g.subMenus.some(sub =>
-              location.pathname.startsWith(getRoute(g.menu, sub.name))
-            );
-            if (hasActive || i === 0) initial[g.menu] = true;
-          });
-          setOpenGroups(initial);
-        }
-      })
-      .catch(console.error)
-      .finally(() => setMenuLoading(false));
-  }, [userId]);
+ 
 
   /* ── Mobile: close sidebar on route change ── */
   useEffect(() => { setSidebarOpen(false); }, [location.pathname]);
@@ -302,19 +284,20 @@ export default function AppLayout() {
             {!collapsed && <span className="sidebar-menu-label">Dashboard</span>}
           </NavLink>
 
-          {menuLoading ? (
-            !collapsed && <div style={{ padding: 20, color: '#94a3b8', fontSize: 13 }}>Loading menus…</div>
-          ) : (
-            menus.map(group => (
-              <SidebarMenu
-                key={group.menu}
-                group={group}
-                isOpen={!!openGroups[group.menu]}
-                onToggle={() => toggleGroup(group.menu)}
-                collapsed={collapsed}
-              />
-            ))
-          )}
+         {menuGroups.length === 0 ? (
+  !collapsed && <div style={{ padding: 20, color: '#94a3b8', fontSize: 13 }}>Loading menus…</div>
+) : (
+  menuGroups.map(group => (
+    <SidebarMenu
+      key={group.menu}
+      group={group}
+      isOpen={!!openGroups[group.menu]}
+      onToggle={() => toggleGroup(group.menu)}
+      collapsed={collapsed}
+    />
+  ))
+)}
+          
         </nav>
 
         {/* Footer / logout */}
