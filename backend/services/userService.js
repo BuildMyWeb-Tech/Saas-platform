@@ -10,9 +10,9 @@ async function getUsers(tag = 1) {
       serialNo:   r.serial_no ?? i + 1,
       uid:        Number(r.uid),
       username:   r.username,
+        userpassword: r.userpassword,
       menuAccess: Number(r.MenuAccess ?? 0),
       active:     Number(r.active ?? 1),
-      // ❌ userpassword intentionally omitted
     }));
 }
 
