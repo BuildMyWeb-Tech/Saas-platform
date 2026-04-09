@@ -11,6 +11,7 @@ const adminRoutes = require('./routes/adminRoutes');
 const menuRoutes = require("./routes/menuRoutes");
 const dashboardRoutes = require("./routes/dashboardRoutes");
 const generalMasterRoutes = require("./routes/generalMasterRoutes");
+const userRoutes = require("./routes/userRoutes");
 const { notFound, errorHandler } = require('./middleware/errorMiddleware');
 const { verifyEmailConnection }  = require('./services/emailService');
 
@@ -63,6 +64,7 @@ app.use('/api/admin', adminRoutes);
 app.use("/api/menus", menuRoutes);
 app.use("/api/dashboard", dashboardRoutes);
 app.use("/api/general", generalMasterRoutes);
+app.use("/api/users", userRoutes);
 app.use(notFound);
 app.use(errorHandler);
 
