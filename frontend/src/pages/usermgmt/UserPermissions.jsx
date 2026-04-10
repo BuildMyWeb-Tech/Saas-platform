@@ -1,8 +1,8 @@
 // frontend/src/pages/usermgmt/UserPermissions.jsx
 import React, { useState, useEffect, useCallback } from "react";
-import { useNavigate, useParams } from "react-router-dom";
+import { useNavigate, useParams, useLocation } from "react-router-dom";
 import { Shield, Save, X, ArrowLeft, CheckSquare, Square, ChevronRight } from "lucide-react";
-import { getUserPermissions, saveUserPermissions } from "../../services/userService";
+import { getUserPermissions, saveUserPermissions, getUsers } from "../../services/userService";
 
 const PERM_DEFS = [
   { key: "MWrite",  label: "C", title: "Create", color: "#22c55e" },
@@ -28,14 +28,34 @@ function PermCheck({ label, title, checked, onChange, color }) {
 }
 
 export default function UserPermissions() {
-  const navigate = useNavigate();
-  const { id }   = useParams();
+  const navigate          = useNavigate();
+  const { id }            = useParams();
+  const location          = useLocation();
+
+  // ── Username: prefer nav state, fall back to fetching from API ──────────────
+  const [username, setUsername] = useState(location.state?.username || "");
 
   const [menuData, setMenuData] = useState([]);
   const [perms,    setPerms]    = useState({});
   const [loading,  setLoading]  = useState(true);
   const [saving,   setSaving]   = useState(false);
   const [error,    setError]    = useState("");
+
+  // ── Fetch username if not passed via nav state (e.g. direct URL access) ─────
+  useEffect(() => {
+    if (username) return; // already have it
+    (async () => {
+      try {
+        const [r1, r0] = await Promise.all([getUsers(1), getUsers(0)]);
+        const user = [...(r1.data || []), ...(r0.data || [])].find(
+          u => u.uid === Number(id)
+        );
+        if (user?.username) setUsername(user.username);
+      } catch {
+        // silently ignore — title just won't show the name
+      }
+    })();
+  }, [id, username]);
 
   const load = useCallback(async () => {
     setLoading(true); setError("");
@@ -155,8 +175,18 @@ export default function UserPermissions() {
           <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
             <div className="um-perm-card-icon"><Shield size={17} /></div>
             <div>
-              <div className="um-card-title">Assign Permissions</div>
-              <div className="um-card-subtitle">User ID: {id} — select menu access rights</div>
+              {/* ✅ Shows "Assign Permissions for User: admin1" */}
+              <div className="um-card-title">
+                Assign Permissions for User:
+                {username && (
+                  <span style={{
+                    marginLeft: 8,
+                    fontWeight: 700,
+                    letterSpacing: "0.01em",
+                  }}>{username}
+                  </span>
+                )}
+              </div>
             </div>
           </div>
           {!loading && menuData.length > 0 && (
@@ -183,7 +213,7 @@ export default function UserPermissions() {
           </div>
         )}
 
-        {/* Body — NO max-height, scrolls naturally with page */}
+        {/* Body */}
         <div className="um-perm-body">
           {error && <div className="gm-alert-error" style={{ marginBottom: 12 }}>{error}</div>}
 
