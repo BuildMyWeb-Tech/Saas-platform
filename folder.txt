@@ -9,6 +9,7 @@
       📄 dashboardController.js
       📄 generalMasterController.js
       📄 menuController.js
+      📄 userController.js
    📁 database
       📄 sqlConnection.js
    📁 middleware
@@ -26,12 +27,14 @@
       📄 authRepo.js
       📄 generalRepo.js
       📄 menuRepo.js
+      📄 userRepo.js
    📁 routes
       📄 adminRoutes.js
       📄 authRoutes.js
       📄 dashboardRoutes.js
       📄 generalMasterRoutes.js
       📄 menuRoutes.js
+      📄 userRoutes.js
    📁 scripts
       📄 seedAdmin.js
    📄 server.js
@@ -41,6 +44,7 @@
       📄 erpAuthService.js
       📄 generalMasterService.js
       📄 menuService.js
+      📄 userService.js
    📁 utils
       📄 generateCompanyCode.js
       📄 generateCredentials.js
@@ -54,6 +58,15 @@
    📄 package-lock.json
    📄 package.json
    📁 public
+      📁 brand
+         📄 android-chrome-192x192.png
+         📄 android-chrome-512x512.png
+         📄 apple-touch-icon.png
+         📄 favicon-16x16.png
+         📄 favicon-32x32.png
+         📄 favicon.ico
+         📄 logo.png
+         📄 site.webmanifest
       📄 favicon.svg
       📄 icons.svg
    📄 README.md
@@ -91,12 +104,18 @@
             📄 Employees.jsx
             📄 Machines.jsx
             📄 Process.jsx
+         📁 usermgmt
+            📄 um_styles.css
+            📄 UserForm.jsx
+            📄 UserPermissions.jsx
+            📄 Users.jsx
          📄 Verify.jsx
       📁 services
          📄 adminService.js
          📄 authService.js
          📄 departmentService.js
          📄 generalService.js
+         📄 userService.js
    📄 vercel.json
    📄 vite.config.js
 📄 GeneralMaster.postman_collection.json
