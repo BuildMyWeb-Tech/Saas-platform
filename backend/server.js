@@ -12,6 +12,7 @@ const menuRoutes = require("./routes/menuRoutes");
 const dashboardRoutes = require("./routes/dashboardRoutes");
 const generalMasterRoutes = require("./routes/generalMasterRoutes");
 const userRoutes = require("./routes/userRoutes");
+const customerRoutes = require("./routes/customerRoutes");
 const { notFound, errorHandler } = require('./middleware/errorMiddleware');
 const { verifyEmailConnection }  = require('./services/emailService');
 
@@ -65,6 +66,7 @@ app.use("/api/menus", menuRoutes);
 app.use("/api/dashboard", dashboardRoutes);
 app.use("/api/general", generalMasterRoutes);
 app.use("/api/users", userRoutes);
+app.use("/api/customers", customerRoutes);
 app.use(notFound);
 app.use(errorHandler);
 

@@ -18,6 +18,8 @@ import Process     from './pages/setup/Process';
 import Users           from './pages/usermgmt/Users';
 import UserForm        from './pages/usermgmt/UserForm';
 import UserPermissions from './pages/usermgmt/UserPermissions';
+import Customers    from './pages/setup/Customers';
+import CustomerForm from './pages/setup/CustomerForm';
 
 // Placeholder helper for future modules
 const ph = (section, subs) => subs.map(sub => (
@@ -45,7 +47,9 @@ export default function App() {
           <Route path="setup/employees"   element={<Employees />} />
               <Route path="setup/machines"    element={<Machines />} />
             <Route path="setup/process"     element={<Process />} />
-            {ph('setup', ['customers'])}
+            <Route path="setup/customers"              element={<Customers />} />
+<Route path="setup/customers/create"       element={<CustomerForm />} />
+<Route path="setup/customers/edit/:id"     element={<CustomerForm />} />
 
             {/* ── Other modules (placeholders) ── */}
             {ph('planning',       ['job-card', 'process-planning'])}

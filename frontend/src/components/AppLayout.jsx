@@ -33,6 +33,7 @@ const SUBMENU_ICONS = {
   'Machines':    Factory,
   'Process':     Workflow,
   'Job Card':    FileText,
+  'Customers':   Users2,
 };
 
 function getRoute(menuName, subName) {
