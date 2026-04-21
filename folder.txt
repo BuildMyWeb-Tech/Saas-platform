@@ -6,6 +6,7 @@
    📁 controllers
       📄 adminController.js
       📄 authController.js
+      📄 customerController.js
       📄 dashboardController.js
       📄 generalMasterController.js
       📄 menuController.js
@@ -25,12 +26,14 @@
    📄 render.yaml
    📁 repositories
       📄 authRepo.js
+      📄 customerRepo.js
       📄 generalRepo.js
       📄 menuRepo.js
       📄 userRepo.js
    📁 routes
       📄 adminRoutes.js
       📄 authRoutes.js
+      📄 customerRoutes.js
       📄 dashboardRoutes.js
       📄 generalMasterRoutes.js
       📄 menuRoutes.js
@@ -39,6 +42,7 @@
       📄 seedAdmin.js
    📄 server.js
    📁 services
+      📄 customerService.js
       📄 dashboardService.js
       📄 emailService.js
       📄 erpAuthService.js
@@ -99,6 +103,8 @@
          📄 PlaceholderPage.jsx
          📄 Register.jsx
          📁 setup
+            📄 CustomerForm.jsx
+            📄 Customers.jsx
             📄 Department.jsx
             📄 Designation.jsx
             📄 Employees.jsx
@@ -113,6 +119,7 @@
       📁 services
          📄 adminService.js
          📄 authService.js
+         📄 customerService.js
          📄 departmentService.js
          📄 generalService.js
          📄 userService.js

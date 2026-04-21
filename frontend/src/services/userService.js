@@ -25,6 +25,12 @@ export const deleteUser = async (id) => {
   return res.data;
 };
 
+// 🔹 RESTORE USER (undelete)  ← NEW
+export const restoreUser = async (id) => {
+  const res = await api.patch(`/users/${id}/restore`);
+  return res.data;
+};
+
 // 🔹 GET PERMISSIONS FOR A USER
 export const getUserPermissions = async (userId) => {
   const res = await api.get(`/users/${userId}/permissions`);

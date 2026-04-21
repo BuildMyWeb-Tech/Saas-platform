@@ -1,13 +1,11 @@
 // frontend/src/pages/usermgmt/Users.jsx
-// List view uses gm-* classes (index.css) to match GeneralMaster/Department design.
-// UserForm + UserPermissions keep their own um_styles.css untouched.
+// ✅ FIX 3: After restore → setIsActive(true) so user moves to active tab visually
 
 import React, { useState, useEffect, useCallback, useMemo } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { usePermissions } from "../../context/AuthContext";
-import { getUsers, deleteUser } from "../../services/userService";
+import { getUsers, deleteUser, restoreUser } from "../../services/userService";
 
-/* ── Icons (inline, same as GeneralMaster) ─────────────────── */
 const Ico = {
   Edit:   () => (<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>),
   Trash:  () => (<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 01-2 2H8a2 2 0 01-2-2L5 6"/><path d="M10 11v6M14 11v6"/><path d="M9 6V4a1 1 0 011-1h4a1 1 0 011 1v2"/></svg>),
@@ -16,9 +14,13 @@ const Ico = {
   Search: () => (<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>),
   Lock:   () => (<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0110 0v4"/></svg>),
   Shield: () => (<svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>),
+  Restore: () => (
+    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 1 0 .49-3.51"/>
+    </svg>
+  ),
 };
 
-/* ── Toast ─────────────────────────────────────────────────── */
 function Toast({ toast }) {
   if (!toast.msg) return null;
   return (
@@ -29,43 +31,20 @@ function Toast({ toast }) {
   );
 }
 
-/* ── Toggle — [Inactive] ──●── [Active]  (identical to GeneralMaster) ── */
 function Toggle({ checked, onChange }) {
   return (
-    <div
-      className="gm-toggle-wrap"
-      role="switch"
-      aria-checked={checked}
-      tabIndex={0}
-      onKeyDown={e => e.key === " " && onChange()}
-    >
-      <span
-        className={`gm-toggle-label ${!checked ? "gm-toggle-label--on" : "gm-toggle-label--off"}`}
-        onClick={onChange}
-        style={{ cursor: "pointer" }}
-      >
-        Inactive
-      </span>
-
-      <div
-        className={`gm-toggle-pill ${checked ? "gm-toggle-pill--active" : "gm-toggle-pill--inactive"}`}
-        onClick={onChange}
-      >
-        <div className="gm-toggle-knob" />
-      </div>
-
-      <span
-        className={`gm-toggle-label ${checked ? "gm-toggle-label--on" : "gm-toggle-label--off"}`}
-        onClick={onChange}
-        style={{ cursor: "pointer" }}
-      >
-        Active
-      </span>
+    <div className="gm-toggle-wrap" role="switch" aria-checked={checked} tabIndex={0}
+      onKeyDown={e => e.key === " " && onChange()}>
+      <span className={`gm-toggle-label ${!checked ? "gm-toggle-label--on" : "gm-toggle-label--off"}`}
+        onClick={onChange} style={{ cursor: "pointer" }}>Inactive</span>
+      <div className={`gm-toggle-pill ${checked ? "gm-toggle-pill--active" : "gm-toggle-pill--inactive"}`}
+        onClick={onChange}><div className="gm-toggle-knob" /></div>
+      <span className={`gm-toggle-label ${checked ? "gm-toggle-label--on" : "gm-toggle-label--off"}`}
+        onClick={onChange} style={{ cursor: "pointer" }}>Active</span>
     </div>
   );
 }
 
-/* ── SortTh ────────────────────────────────────────────────── */
 function SortTh({ label, field, sortField, sortDir, onSort }) {
   const active = sortField === field;
   return (
@@ -73,7 +52,7 @@ function SortTh({ label, field, sortField, sortDir, onSort }) {
       <div className="gm-th-inner">
         {label}
         <span className="gm-sort-arrows">
-          <svg width="8" height="5" viewBox="0 0 8 5"><path d="M4 0L7.46 5H.54L4 0z" fill={active && sortDir === "asc"  ? "#818cf8" : "#475569"} /></svg>
+          <svg width="8" height="5" viewBox="0 0 8 5"><path d="M4 0L7.46 5H.54L4 0z" fill={active && sortDir === "asc" ? "#818cf8" : "#475569"} /></svg>
           <svg width="8" height="5" viewBox="0 0 8 5"><path d="M4 5L.54 0H7.46L4 5z" fill={active && sortDir === "desc" ? "#818cf8" : "#475569"} /></svg>
         </span>
       </div>
@@ -81,7 +60,6 @@ function SortTh({ label, field, sortField, sortDir, onSort }) {
   );
 }
 
-/* ── Confirm Delete Modal ───────────────────────────────────── */
 function ConfirmModal({ username, onConfirm, onClose, deleting }) {
   return (
     <div className="gm-overlay" onClick={onClose}>
@@ -91,7 +69,7 @@ function ConfirmModal({ username, onConfirm, onClose, deleting }) {
         <h3 className="gm-confirm-title">Deactivate User</h3>
         <p className="gm-confirm-msg">
           Are you sure you want to deactivate <strong>{username}</strong>?<br />
-          You can reactivate by editing the user.
+          You can restore them from the Inactive view.
         </p>
         <div className="gm-confirm-actions">
           <button className="gm-btn-danger" onClick={onConfirm} disabled={deleting}>
@@ -104,40 +82,32 @@ function ConfirmModal({ username, onConfirm, onClose, deleting }) {
   );
 }
 
-/* ═══════════════════════════════════════════════════════════
-   MAIN Users
-   ═══════════════════════════════════════════════════════════ */
 export default function Users() {
   const navigate  = useNavigate();
   const location  = useLocation();
   const { canAdd, canEdit, canDelete } = usePermissions("Users");
 
-  // ── Data state ───────────────────────────────────────────
   const [rows,      setRows]      = useState([]);
   const [loading,   setLoading]   = useState(true);
   const [loadError, setLoadError] = useState("");
-  const [isActive,  setIsActive]  = useState(true);   // true → tag=1, false → tag=0
+  const [isActive,  setIsActive]  = useState(true);
   const [search,    setSearch]    = useState("");
   const [sortField, setSortField] = useState(null);
   const [sortDir,   setSortDir]   = useState("asc");
+  const [confirm,   setConfirm]   = useState(null);
+  const [deleting,  setDeleting]  = useState(false);
+  const [loadingId, setLoadingId] = useState(null);
 
-  // ── Modal / action state ─────────────────────────────────
-  const [confirm,  setConfirm]  = useState(null);   // { uid, username }
-  const [deleting, setDeleting] = useState(false);
-
-  // ── Toast (own + passed via navigation state) ────────────
   const [toast, setToast] = useState(() => location.state?.toast || null);
   const showToast = (msg, type = "success") => {
     setToast({ msg, type });
     setTimeout(() => setToast(null), 3500);
   };
 
-  // Clear nav state so refresh doesn't re-show toast
   useEffect(() => {
     if (location.state?.toast) window.history.replaceState({}, "");
   }, []);
 
-  /* ── Load users ── */
   const load = useCallback(async () => {
     setLoading(true); setLoadError("");
     try {
@@ -146,15 +116,12 @@ export default function Users() {
     } catch (e) {
       setLoadError(e.response?.data?.message || "Failed to load users.");
       setRows([]);
-    } finally {
-      setLoading(false);
-    }
+    } finally { setLoading(false); }
   }, [isActive]);
 
   useEffect(() => { load(); }, [load]);
   useEffect(() => { setSearch(""); setSortField(null); }, [isActive]);
 
-  /* ── Filter + sort ── */
   const displayRows = useMemo(() => {
     let list = rows;
     if (search.trim()) {
@@ -163,8 +130,7 @@ export default function Users() {
     }
     if (sortField) {
       list = [...list].sort((a, b) => {
-        let av = a[sortField] ?? "";
-        let bv = b[sortField] ?? "";
+        let av = a[sortField] ?? ""; let bv = b[sortField] ?? "";
         if (typeof av === "string") { av = av.toLowerCase(); bv = bv.toLowerCase(); }
         if (av < bv) return sortDir === "asc" ? -1 : 1;
         if (av > bv) return sortDir === "asc" ?  1 : -1;
@@ -179,7 +145,6 @@ export default function Users() {
     else { setSortField(field); setSortDir("asc"); }
   };
 
-  /* ── Delete ── */
   const handleDelete = async () => {
     if (!confirm) return;
     setDeleting(true);
@@ -191,14 +156,27 @@ export default function Users() {
     } catch (e) {
       showToast(e.response?.data?.message || "Deactivate failed.", "error");
       setConfirm(null);
-    } finally {
-      setDeleting(false);
-    }
+    } finally { setDeleting(false); }
+  };
+
+  /* ── Restore ──
+     ✅ FIX 3: setIsActive(true) after restore → auto-switches to active tab.
+     useEffect on isActive fires load() which fetches active users.
+  ── */
+  const handleRestore = async (row) => {
+    setLoadingId(row.uid);
+    try {
+      const res = await restoreUser(row.uid);
+      showToast(res.message || `"${row.username}" has been restored.`);
+      setIsActive(true);   // ← Switch to active tab; load() fires via useEffect
+    } catch (err) {
+      showToast(err.response?.data?.message || "Restore failed.", "error");
+    } finally { setLoadingId(null); }
   };
 
   const COLS = [
-    { key: "serialNo", label: "SL. NO" },
-    { key: "username",  label: "USERNAME" },
+    { key: "serialNo",   label: "SL. NO" },
+    { key: "username",   label: "USERNAME" },
     { key: "menuAccess", label: "MENU ACCESS" },
   ];
 
@@ -207,15 +185,10 @@ export default function Users() {
       <Toast toast={toast || { msg: "" }} />
 
       {confirm && (
-        <ConfirmModal
-          username={confirm.username}
-          onConfirm={handleDelete}
-          onClose={() => setConfirm(null)}
-          deleting={deleting}
-        />
+        <ConfirmModal username={confirm.username}
+          onConfirm={handleDelete} onClose={() => setConfirm(null)} deleting={deleting} />
       )}
 
-      {/* ── Page header ── */}
       <div className="gm-page-header">
         <div>
           <h1 className="gm-page-title">Users List</h1>
@@ -223,7 +196,6 @@ export default function Users() {
             {isActive ? "Showing active users" : "Showing inactive users"}
           </p>
         </div>
-
         {isActive && canAdd && (
           <button className="gm-btn-add" onClick={() => navigate("/user-management/users/create")}>
             <Ico.Plus /> Add New User
@@ -231,24 +203,15 @@ export default function Users() {
         )}
       </div>
 
-      {/* ── Controls row ── */}
       <div className="gm-controls">
         <Toggle checked={isActive} onChange={() => setIsActive(v => !v)} />
-
         <div className="gm-controls-right">
           <div className="gm-search-wrap">
             <span className="gm-search-icon"><Ico.Search /></span>
-            <input
-              type="text"
-              className="gm-search-input"
-              placeholder="Search users..."
-              value={search}
-              onChange={e => setSearch(e.target.value)}
-            />
+            <input type="text" className="gm-search-input" placeholder="Search users..."
+              value={search} onChange={e => setSearch(e.target.value)} />
             {search && (
-              <button className="gm-search-clear" onClick={() => setSearch("")}>
-                <Ico.Close />
-              </button>
+              <button className="gm-search-clear" onClick={() => setSearch("")}><Ico.Close /></button>
             )}
           </div>
         </div>
@@ -256,101 +219,82 @@ export default function Users() {
 
       {loadError && <div className="gm-alert-error">⚠ {loadError}</div>}
 
-      {/* ── Table ── */}
       <div className="gm-table-wrap">
         {loading ? (
-          <div className="gm-loading">
-            <div className="gm-spinner" />
-            <span>Loading users...</span>
-          </div>
+          <div className="gm-loading"><div className="gm-spinner" /><span>Loading users...</span></div>
         ) : (
           <table className="gm-table">
             <thead>
               <tr>
                 {COLS.map(col => (
-                  <SortTh
-                    key={col.key}
-                    label={col.label}
-                    field={col.key}
-                    sortField={sortField}
-                    sortDir={sortDir}
-                    onSort={handleSort}
-                  />
+                  <SortTh key={col.key} label={col.label} field={col.key}
+                    sortField={sortField} sortDir={sortDir} onSort={handleSort} />
                 ))}
                 <th className="gm-th gm-th-action">ACTION</th>
               </tr>
             </thead>
             <tbody>
               {displayRows.length === 0 ? (
-                <tr>
-                  <td colSpan={4} className="gm-empty">
-                    {search
-                      ? `No results for "${search}".`
-                      : `No ${isActive ? "active" : "inactive"} users found.`}
-                  </td>
-                </tr>
+                <tr><td colSpan={4} className="gm-empty">
+                  {search ? `No results for "${search}".`
+                    : `No ${isActive ? "active" : "inactive"} users found.`}
+                </td></tr>
               ) : (
                 displayRows.map((row, idx) => (
                   <tr key={row.uid} className="gm-row">
-                    {/* Serial number */}
                     <td className="gm-td gm-td-code">{idx + 1}</td>
-
-                    {/* Username */}
-                    <td className="gm-td" style={{ fontWeight: 600, color: "#e2e8f0" }}>
-                      {row.username}
-                    </td>
-
-                    {/* Menu access badge */}
+                    <td className="gm-td" style={{ fontWeight: 600, color: "#e2e8f0" }}>{row.username}</td>
                     <td className="gm-td">
                       <span style={{
                         display: "inline-flex", alignItems: "center", gap: 5,
                         background: "rgba(99,102,241,0.10)",
                         border: "1px solid rgba(99,102,241,0.22)",
                         borderRadius: 20, padding: "3px 10px",
-                        fontSize: 12, fontWeight: 600, color: "#818cf8",
-                        whiteSpace: "nowrap",
+                        fontSize: 12, fontWeight: 600, color: "#818cf8", whiteSpace: "nowrap",
                       }}>
                         <Ico.Shield />
                         {row.menuAccess} {row.menuAccess === 1 ? "menu" : "menus"}
                       </span>
                     </td>
 
-                    {/* Actions */}
                     <td className="gm-td gm-td-actions">
                       {isActive ? (
                         <>
                           {canEdit ? (
-                            <button
-                              className="gm-icon-btn gm-icon-edit"
+                            <button className="gm-icon-btn gm-icon-edit"
                               onClick={() => navigate(`/user-management/users/edit/${row.uid}`)}
-                              title={`Edit ${row.username}`}
-                              aria-label={`Edit ${row.username}`}
-                            >
+                              disabled={loadingId === row.uid}
+                              title={`Edit ${row.username}`}>
                               <Ico.Edit />
                             </button>
                           ) : (
                             <span className="gm-icon-locked"><Ico.Lock /></span>
                           )}
-
                           {canDelete ? (
-                            <button
-                              className="gm-icon-btn gm-icon-delete"
+                            <button className="gm-icon-btn gm-icon-delete"
                               onClick={() => setConfirm({ uid: row.uid, username: row.username })}
-                              title={`Deactivate ${row.username}`}
-                              aria-label={`Deactivate ${row.username}`}
-                            >
+                              disabled={loadingId === row.uid}
+                              title={`Deactivate ${row.username}`}>
                               <Ico.Trash />
                             </button>
                           ) : (
                             <span className="gm-icon-locked"><Ico.Lock /></span>
                           )}
-
-                          {!canEdit && !canDelete && (
-                            <span className="gm-no-actions">—</span>
-                          )}
                         </>
                       ) : (
-                        <span className="gm-inactive-badge">Inactive</span>
+                        canEdit ? (
+                          <button className="gm-icon-btn gm-icon-restore"
+                            onClick={() => handleRestore(row)}
+                            disabled={loadingId === row.uid}
+                            title={`Restore ${row.username}`}>
+                            {loadingId === row.uid
+                              ? <span className="gm-spinner-sm" />
+                              : <Ico.Restore />
+                            }
+                          </button>
+                        ) : (
+                          <span className="gm-inactive-badge">Inactive</span>
+                        )
                       )}
                     </td>
                   </tr>
@@ -361,7 +305,6 @@ export default function Users() {
         )}
       </div>
 
-      {/* Footer */}
       {!loading && (
         <div className="gm-footer">
           {displayRows.length !== rows.length

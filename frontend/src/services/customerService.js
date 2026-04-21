@@ -30,3 +30,9 @@ export const deleteCustomer = async (id) => {
   const res = await api.delete(`/customers/${id}`);
   return res.data;
 };
+
+// 🔹 RESTORE CUSTOMER (undelete — sets Active = 1 via SP)  ← NEW
+export const restoreCustomer = async (id) => {
+  const res = await api.patch(`/customers/${id}/restore`);
+  return res.data;
+};

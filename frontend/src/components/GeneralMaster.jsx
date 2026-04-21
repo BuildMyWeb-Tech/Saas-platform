@@ -1,13 +1,18 @@
-// src/components/GeneralMaster.jsx
+// frontend/src/components/GeneralMaster.jsx
 // Reusable CRUD master — permissions from PR_Get_MenuRights_ForUser via API
 //
-// Toggle design: [Inactive] ──●── [Active]
-//   • Active side  = blue  when active records are shown
-//   • Inactive side = blue when inactive records are shown
-//   • The NON-selected side label is dark/muted
+// ✅ NEW: Restore (undelete) for inactive rows when canEdit
+// ✅ NEW: loadingId — prevents double-click on restore
+// ✅ NEW: Normalised isActive field (row.Active ?? row.active)
 
 import React, { useEffect, useState, useCallback, useMemo } from 'react';
-import { fetchGeneral, createGeneral, updateGeneral, deleteGeneral } from '../services/generalService';
+import {
+  fetchGeneral,
+  createGeneral,
+  updateGeneral,
+  deleteGeneral,
+  restoreGeneral,          // ← NEW
+} from '../services/generalService';
 import { usePermissions } from '../context/AuthContext';
 
 /* ── Icons ─────────────────────────────────────────────────── */
@@ -17,6 +22,13 @@ const Ico = {
   Plus:   () => (<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>),
   Close:  () => (<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>),
   Search: () => (<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>),
+  // RotateCcw — restore / undelete  ← NEW
+  Restore: () => (
+    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <polyline points="1 4 1 10 7 10"/>
+      <path d="M3.51 15a9 9 0 1 0 .49-3.51"/>
+    </svg>
+  ),
 };
 
 /* ── Toast ─────────────────────────────────────────────────── */
@@ -30,11 +42,7 @@ function Toast({ toast }) {
   );
 }
 
-/* ── Toggle ─────────────────────────────────────────────────
-   Layout:  [Inactive]  ──●──  [Active]
-   isActive=true  → knob right → "Active"  label blue, "Inactive" dark
-   isActive=false → knob left  → "Inactive" label blue, "Active"  dark
-────────────────────────────────────────────────────────────── */
+/* ── Toggle ─────────────────────────────────────────────────── */
 function Toggle({ checked, onChange }) {
   return (
     <div
@@ -44,7 +52,6 @@ function Toggle({ checked, onChange }) {
       tabIndex={0}
       onKeyDown={e => e.key === ' ' && onChange()}
     >
-      {/* LEFT label — Inactive */}
       <span
         className={`gm-toggle-label ${!checked ? 'gm-toggle-label--on' : 'gm-toggle-label--off'}`}
         onClick={onChange}
@@ -52,16 +59,12 @@ function Toggle({ checked, onChange }) {
       >
         Inactive
       </span>
-
-      {/* The pill + knob */}
       <div
         className={`gm-toggle-pill ${checked ? 'gm-toggle-pill--active' : 'gm-toggle-pill--inactive'}`}
         onClick={onChange}
       >
         <div className="gm-toggle-knob" />
       </div>
-
-      {/* RIGHT label — Active */}
       <span
         className={`gm-toggle-label ${checked ? 'gm-toggle-label--on' : 'gm-toggle-label--off'}`}
         onClick={onChange}
@@ -163,7 +166,7 @@ function ConfirmModal({ title, item, onConfirm, onClose, deleting }) {
         <h3 className="gm-confirm-title">Delete {title}</h3>
         <p className="gm-confirm-msg">
           Are you sure you want to delete <strong>{item?.name}</strong>?<br />
-          This action cannot be undone.
+          This will deactivate the record.
         </p>
         <div className="gm-confirm-actions">
           <button className="gm-btn-danger" onClick={onConfirm} disabled={deleting}>
@@ -180,28 +183,27 @@ function ConfirmModal({ title, item, onConfirm, onClose, deleting }) {
    MAIN GeneralMaster
    ═══════════════════════════════════════════════════════════ */
 export default function GeneralMaster({ gtypeuid, title }) {
-  // Permissions sourced from PR_Get_MenuRights_ForUser → menuService → AuthContext
-  // canAdd    = MWrite  === 1
-  // canEdit   = MUpdate === 1
-  // canDelete = MDelete === 1
   const { canAdd, canEdit, canDelete } = usePermissions(title);
 
   // ── Data state ───────────────────────────────────────────
-  const [rows, setRows]           = useState([]);
-  const [loading, setLoading]     = useState(true);
-  const [loadError, setLoadErr]   = useState('');
-  const [isActive, setIsActive]   = useState(true);   // true→tag=1, false→tag=0
-  const [search, setSearch]       = useState('');
-  const [sortField, setSortField] = useState(null);
-  const [sortDir,   setSortDir]   = useState('asc');
+  const [rows,       setRows]       = useState([]);
+  const [loading,    setLoading]    = useState(true);
+  const [loadError,  setLoadErr]    = useState('');
+  const [isActive,   setIsActive]   = useState(true);
+  const [search,     setSearch]     = useState('');
+  const [sortField,  setSortField]  = useState(null);
+  const [sortDir,    setSortDir]    = useState('asc');
 
   // ── Modal state ──────────────────────────────────────────
-  const [modal,      setModal]      = useState(null);
-  const [editRow,    setEditRow]    = useState(null);
-  const [saving,     setSaving]     = useState(false);
-  const [saveErr,    setSaveErr]    = useState('');
-  const [deleteItem, setDeleteItem] = useState(null);
-  const [deleting,   setDeleting]   = useState(false);
+  const [modal,       setModal]      = useState(null);
+  const [editRow,     setEditRow]    = useState(null);
+  const [saving,      setSaving]     = useState(false);
+  const [saveErr,     setSaveErr]    = useState('');
+  const [deleteItem,  setDeleteItem] = useState(null);
+  const [deleting,    setDeleting]   = useState(false);
+
+  // ── Prevent double-click: tracks which row.id is in-flight ── ← NEW
+  const [loadingId, setLoadingId] = useState(null);
 
   // ── Toast ────────────────────────────────────────────────
   const [toast, setToast] = useState({ msg: '', type: 'success' });
@@ -210,7 +212,7 @@ export default function GeneralMaster({ gtypeuid, title }) {
     setTimeout(() => setToast({ msg: '', type: 'success' }), 3500);
   };
 
-  /* ── Load: PR_GetGeneralMData_FrontGrid @Gtypeuid=gtypeuid, @Tag=1|0 ── */
+  /* ── Load ── */
   const load = useCallback(async () => {
     setLoading(true); setLoadErr('');
     try {
@@ -285,6 +287,23 @@ export default function GeneralMaster({ gtypeuid, title }) {
     } finally { setDeleting(false); }
   };
 
+  /* ── Restore (undelete) ──  ← NEW
+     No confirm modal — restore is non-destructive.
+     loadingId prevents double-click.
+  ── */
+  const handleRestore = async (row) => {
+    setLoadingId(row.id);
+    try {
+      const res = await restoreGeneral({ type: gtypeuid, id: row.id });
+      showToast(res.message || `"${row.name}" has been restored.`);
+      load();
+    } catch (err) {
+      showToast(err.response?.data?.message || 'Restore failed.', 'error');
+    } finally {
+      setLoadingId(null);
+    }
+  };
+
   const COLS = [
     { key: 'code',      label: 'CODE' },
     { key: 'name',      label: `${title.toUpperCase()} NAME` },
@@ -318,7 +337,6 @@ export default function GeneralMaster({ gtypeuid, title }) {
           </p>
         </div>
 
-        {/* Add button: visible only when MWrite=1 AND active tab */}
         {isActive && canAdd && (
           <button className="gm-btn-add" onClick={openAdd}>
             <Ico.Plus /> Add New Record
@@ -328,13 +346,7 @@ export default function GeneralMaster({ gtypeuid, title }) {
 
       {/* ── Controls row ── */}
       <div className="gm-controls">
-        {/*
-          Toggle: [Inactive] ──●── [Active]
-          Clicking either label or pill switches the data loaded.
-          Blue label = currently selected/active side.
-        */}
         <Toggle checked={isActive} onChange={() => setIsActive(v => !v)} />
-
         <div className="gm-controls-right">
           <div className="gm-search-wrap">
             <span className="gm-search-icon"><Ico.Search /></span>
@@ -373,45 +385,70 @@ export default function GeneralMaster({ gtypeuid, title }) {
                     : `No ${isActive ? 'active' : 'inactive'} records found.`}
                 </td></tr>
               ) : (
-                displayRows.map(row => (
-                  <tr key={row.id} className="gm-row">
-                    <td className="gm-td gm-td-code">{row.code}</td>
-                    <td className="gm-td">{row.name}</td>
-                    <td className="gm-td">{row.shortName || '—'}</td>
-                    <td className="gm-td gm-td-actions">
-                      {isActive ? (
-                        <>
-                          {/* Edit: shown only if MUpdate=1, hidden entirely otherwise */}
-                          {canEdit && (
-                            <button className="gm-icon-btn gm-icon-edit"
-                              onClick={() => openEdit(row)}
-                              title={`Edit ${row.name}`}
-                              aria-label={`Edit ${row.name}`}>
-                              <Ico.Edit />
-                            </button>
-                          )}
+                displayRows.map(row => {
+                  // ✅ Normalise Active field (SP may return Active or active)
+                  const rowIsActive = row.Active ?? row.active ?? 1;
 
-                          {/* Delete: shown only if MDelete=1, hidden entirely otherwise */}
-                          {canDelete && (
-                            <button className="gm-icon-btn gm-icon-delete"
-                              onClick={() => confirmDelete(row)}
-                              title={`Delete ${row.name}`}
-                              aria-label={`Delete ${row.name}`}>
-                              <Ico.Trash />
-                            </button>
-                          )}
+                  return (
+                    <tr key={row.id} className="gm-row">
+                      <td className="gm-td gm-td-code">{row.code}</td>
+                      <td className="gm-td">{row.name}</td>
+                      <td className="gm-td">{row.shortName || '—'}</td>
 
-                          {/* If user has no edit AND no delete rights */}
-                          {!canEdit && !canDelete && (
-                            <span className="gm-no-actions">—</span>
-                          )}
-                        </>
-                      ) : (
-                        <span className="gm-inactive-badge">Inactive</span>
-                      )}
-                    </td>
-                  </tr>
-                ))
+                      {/* ── Action cell ── */}
+                      <td className="gm-td gm-td-actions">
+                        {isActive ? (
+                          /* ── ACTIVE ROW: Edit + Delete ── */
+                          <>
+                            {canEdit && (
+                              <button
+                                className="gm-icon-btn gm-icon-edit"
+                                onClick={() => openEdit(row)}
+                                disabled={loadingId === row.id}
+                                title={`Edit ${row.name}`}
+                                aria-label={`Edit ${row.name}`}
+                              >
+                                <Ico.Edit />
+                              </button>
+                            )}
+                            {canDelete && (
+                              <button
+                                className="gm-icon-btn gm-icon-delete"
+                                onClick={() => confirmDelete(row)}
+                                disabled={loadingId === row.id}
+                                title={`Delete ${row.name}`}
+                                aria-label={`Delete ${row.name}`}
+                              >
+                                <Ico.Trash />
+                              </button>
+                            )}
+                            {!canEdit && !canDelete && (
+                              <span className="gm-no-actions">—</span>
+                            )}
+                          </>
+                        ) : (
+                          /* ── INACTIVE ROW: Restore OR "Inactive" badge ── */
+                          canEdit ? (
+                            <button
+                              className="gm-icon-btn gm-icon-restore"
+                              onClick={() => handleRestore(row)}
+                              disabled={loadingId === row.id}
+                              title={`Restore ${row.name}`}
+                              aria-label={`Restore ${row.name}`}
+                            >
+                              {loadingId === row.id
+                                ? <span className="gm-spinner-sm" />
+                                : <Ico.Restore />
+                              }
+                            </button>
+                          ) : (
+                            <span className="gm-inactive-badge">Inactive</span>
+                          )
+                        )}
+                      </td>
+                    </tr>
+                  );
+                })
               )}
             </tbody>
           </table>

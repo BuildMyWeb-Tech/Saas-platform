@@ -1,11 +1,13 @@
-// src/components/AppLayout.jsx
+// frontend/src/components/AppLayout.jsx
 // Logo image served from: frontend/public/brand/logo.png  → URL: /brand/logo.png
 // Falls back to text if image is missing
+// ✅ SESSION TIMEOUT: auto-logout after 5 min idle (useSessionTimeout hook)
 
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { Outlet, NavLink, useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { getMenus } from '../services/authService';
+import { useSessionTimeout } from '../hooks/useSessionTimeout';   // ← NEW
 
 import {
   Settings, ClipboardList, Printer, Package,
@@ -47,7 +49,6 @@ function SidebarLogo({ collapsed }) {
   const [imgFailed, setImgFailed] = useState(false);
 
   if (collapsed) {
-    // Show only icon/initials when collapsed
     return (
       <div className="app-sidebar-brand app-sidebar-brand--collapsed">
         <div className="app-logo-icon-only">
@@ -100,7 +101,6 @@ function SidebarMenu({ group, isOpen, onToggle, collapsed }) {
   );
 
   if (collapsed) {
-    // Collapsed: show icon only, tooltip on hover
     return (
       <div className="sidebar-menu-group sidebar-menu-group--collapsed" title={group.menu}>
         <button
@@ -109,7 +109,6 @@ function SidebarMenu({ group, isOpen, onToggle, collapsed }) {
         >
           <span className="sidebar-menu-icon"><Icon size={18} /></span>
         </button>
-        {/* Collapsed submenu flyout */}
         {isOpen && (
           <div className="sidebar-submenu-flyout">
             <div className="sidebar-flyout-label">{group.menu}</div>
@@ -120,7 +119,9 @@ function SidebarMenu({ group, isOpen, onToggle, collapsed }) {
                 <NavLink
                   key={sub.id}
                   to={route}
-                  className={({ isActive }) => `sidebar-submenu-item sidebar-flyout-item ${isActive ? 'active' : ''}`}
+                  className={({ isActive }) =>
+                    `sidebar-submenu-item sidebar-flyout-item ${isActive ? 'active' : ''}`
+                  }
                 >
                   {SubIcon && <SubIcon size={14} style={{ marginRight: 8 }} />}
                   {sub.name}
@@ -152,7 +153,9 @@ function SidebarMenu({ group, isOpen, onToggle, collapsed }) {
             <NavLink
               key={sub.id}
               to={route}
-              className={({ isActive }) => `sidebar-submenu-item ${isActive ? 'active' : ''}`}
+              className={({ isActive }) =>
+                `sidebar-submenu-item ${isActive ? 'active' : ''}`
+              }
             >
               {SubIcon && <SubIcon size={14} style={{ marginRight: 8 }} />}
               {sub.name}
@@ -169,7 +172,6 @@ function UserDropdown({ username, onLogout, onProfile }) {
   const [open, setOpen] = useState(false);
   const ref = useRef(null);
 
-  // Close on outside click
   useEffect(() => {
     const handler = (e) => {
       if (ref.current && !ref.current.contains(e.target)) setOpen(false);
@@ -229,13 +231,17 @@ export default function AppLayout() {
   const navigate  = useNavigate();
   const location  = useLocation();
 
-
   const [openGroups,  setOpenGroups]  = useState({});
-  const [sidebarOpen, setSidebarOpen] = useState(false);   // mobile overlay
-  const [collapsed,   setCollapsed]   = useState(false);   // desktop collapse
+  const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [collapsed,   setCollapsed]   = useState(false);
 
-  /* ── Load menus ── */
- 
+  /* ── Session timeout: logout after 5 min idle ── */
+  const handleTimeout = useCallback(() => {
+    logout();
+    navigate('/login');
+  }, [logout, navigate]);
+
+  useSessionTimeout(handleTimeout);   // ← NEW: single line wires up the timer
 
   /* ── Mobile: close sidebar on route change ── */
   useEffect(() => { setSidebarOpen(false); }, [location.pathname]);
@@ -259,10 +265,8 @@ export default function AppLayout() {
       {/* ── Sidebar ── */}
       <aside className={`app-sidebar ${sidebarOpen ? 'open' : ''} ${collapsed ? 'app-sidebar--collapsed' : ''}`}>
 
-        {/* Logo */}
         <SidebarLogo collapsed={collapsed} />
 
-        {/* Toggle button */}
         <button
           className="sidebar-toggle-btn"
           onClick={() => setCollapsed(v => !v)}
@@ -274,34 +278,37 @@ export default function AppLayout() {
           }
         </button>
 
-        {/* Nav */}
         <nav className="app-sidebar-nav">
           <NavLink
             to="/dashboard"
-            className={({ isActive }) => `sidebar-dashboard-link ${isActive ? 'active' : ''} ${collapsed ? 'sidebar-dashboard-link--icon' : ''}`}
+            className={({ isActive }) =>
+              `sidebar-dashboard-link ${isActive ? 'active' : ''} ${collapsed ? 'sidebar-dashboard-link--icon' : ''}`
+            }
             title={collapsed ? 'Dashboard' : undefined}
           >
             <span className="sidebar-menu-icon"><LayoutDashboard size={18} /></span>
             {!collapsed && <span className="sidebar-menu-label">Dashboard</span>}
           </NavLink>
 
-         {menuGroups.length === 0 ? (
-  !collapsed && <div style={{ padding: 20, color: '#94a3b8', fontSize: 13 }}>Loading menus…</div>
-) : (
-  menuGroups.map(group => (
-    <SidebarMenu
-      key={group.menu}
-      group={group}
-      isOpen={!!openGroups[group.menu]}
-      onToggle={() => toggleGroup(group.menu)}
-      collapsed={collapsed}
-    />
-  ))
-)}
-          
+          {menuGroups.length === 0 ? (
+            !collapsed && (
+              <div style={{ padding: 20, color: '#94a3b8', fontSize: 13 }}>
+                Loading menus…
+              </div>
+            )
+          ) : (
+            menuGroups.map(group => (
+              <SidebarMenu
+                key={group.menu}
+                group={group}
+                isOpen={!!openGroups[group.menu]}
+                onToggle={() => toggleGroup(group.menu)}
+                collapsed={collapsed}
+              />
+            ))
+          )}
         </nav>
 
-        {/* Footer / logout */}
         <div className="app-sidebar-footer">
           <button className="app-logout-btn" onClick={handleLogout} title="Logout">
             <LogOut size={18} className="icon" />
@@ -309,17 +316,13 @@ export default function AppLayout() {
         </div>
       </aside>
 
-      {/* Mobile overlay */}
       {sidebarOpen && (
         <div className="app-sidebar-overlay" onClick={() => setSidebarOpen(false)} />
       )}
 
       {/* ── Main area ── */}
       <div className="app-main">
-
-        {/* Topbar */}
         <header className="app-topbar">
-          {/* Mobile hamburger */}
           <button className="app-hamburger" onClick={() => setSidebarOpen(!sidebarOpen)}>
             {sidebarOpen
               ? <ChevronRight size={20} />
@@ -327,7 +330,6 @@ export default function AppLayout() {
             }
           </button>
 
-          {/* Topbar brand with logo */}
           <div className="app-topbar-brand">
             <img
               src="/brand/logo.png"
@@ -338,10 +340,8 @@ export default function AppLayout() {
             <span>Mr. Press Management</span>
           </div>
 
-          {/* Spacer */}
           <div style={{ flex: 1 }} />
 
-          {/* User dropdown */}
           <UserDropdown
             username={username}
             onLogout={handleLogout}
@@ -349,7 +349,6 @@ export default function AppLayout() {
           />
         </header>
 
-        {/* Page content */}
         <main className="app-content">
           <Outlet />
         </main>
