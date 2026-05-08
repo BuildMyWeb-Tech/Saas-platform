@@ -20,6 +20,8 @@ import UserForm        from './pages/usermgmt/UserForm';
 import UserPermissions from './pages/usermgmt/UserPermissions';
 import Customers    from './pages/setup/Customers';
 import CustomerForm from './pages/setup/CustomerForm';
+import JobCardGrid   from './pages/jobcard/JobCardGrid';   // ← ADD
+import JobCardForm   from './pages/jobcard/JobCardForm';   // ← ADD
 
 // Placeholder helper for future modules
 const ph = (section, subs) => subs.map(sub => (
@@ -52,7 +54,11 @@ export default function App() {
 <Route path="setup/customers/edit/:id"     element={<CustomerForm />} />
 
             {/* ── Other modules (placeholders) ── */}
-            {ph('planning',       ['job-card', 'process-planning'])}
+
+            <Route path="planning/job-card"          element={<JobCardGrid />} />
+<Route path="planning/job-card/create"   element={<JobCardForm />} />
+<Route path="planning/job-card/edit/:id" element={<JobCardForm />} />
+{ph('planning', ['process-planning'])}
             {ph('pre-press',      ['process-booking'])}
             {ph('press',          ['process-booking', 'ideal-hours-booking'])}
             {ph('post-press',     ['process-booking'])}
