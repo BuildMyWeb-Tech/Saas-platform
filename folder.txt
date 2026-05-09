@@ -9,6 +9,7 @@
       📄 customerController.js
       📄 dashboardController.js
       📄 generalMasterController.js
+      📄 jobCardController.js
       📄 menuController.js
       📄 userController.js
    📁 database
@@ -28,6 +29,7 @@
       📄 authRepo.js
       📄 customerRepo.js
       📄 generalRepo.js
+      📄 jobCardRepo.js
       📄 menuRepo.js
       📄 userRepo.js
    📁 routes
@@ -36,6 +38,7 @@
       📄 customerRoutes.js
       📄 dashboardRoutes.js
       📄 generalMasterRoutes.js
+      📄 jobCardRoutes.js
       📄 menuRoutes.js
       📄 userRoutes.js
    📁 scripts
@@ -47,6 +50,7 @@
       📄 emailService.js
       📄 erpAuthService.js
       📄 generalMasterService.js
+      📄 jobCardService.js
       📄 menuService.js
       📄 userService.js
    📁 utils
@@ -101,6 +105,10 @@
             📄 CompanyDetail.jsx
          📄 ChangePassword.jsx
          📄 Dashboard.jsx
+         📁 jobcard
+            📄 jc_styles.css
+            📄 JobCardForm.jsx
+            📄 JobCardGrid.jsx
          📄 Login.jsx
          📄 PlaceholderPage.jsx
          📄 Register.jsx
@@ -124,6 +132,7 @@
          📄 customerService.js
          📄 departmentService.js
          📄 generalService.js
+         📄 jobCardService.js
          📄 userService.js
    📄 vercel.json
    📄 vite.config.js

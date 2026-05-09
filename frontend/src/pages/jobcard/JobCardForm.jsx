@@ -134,11 +134,12 @@ function CustomerLookup({ value, onSelect, error, customers }) {
     </div>
   );
 }
+const todayISO = () => new Date().toISOString().split("T")[0]; // yyyy-MM-dd
 
 /* ═══ MAIN FORM ════════════════════════════════════════════ */
 const EMPTY = {
   DocNo:         "",
-  DocDate:       "",
+  DocDate:       todayISO(),   // ← auto-fill today on create
   CustomerUid:   null,
   ContactMobile: "",
   ContactPerson: "",
@@ -286,8 +287,8 @@ export default function JobCardForm() {
   };
 
   return (
-    <div className="um-form-page">
-      <div className="um-form-wrap">
+   <div className="um-form-page">
+  <div className="um-form-wrap jc-form-wrap">
 
         {/* ── Breadcrumb ── */}
         <div className="um-breadcrumb">
@@ -347,12 +348,15 @@ export default function JobCardForm() {
                   )}
 
                   <Field label="Job Date" required error={errors.DocDate}>
-                    <input
-                      name="DocDate" type="date"
-                      className={`gm-input${errors.DocDate ? " error" : ""}`}
-                      value={form.DocDate} onChange={handleChange}
-                    />
-                  </Field>
+  <input
+    name="DocDate" type="date"
+    className="gm-input"
+    value={form.DocDate}
+    onChange={handleChange}
+    disabled
+    style={{ opacity: 0.7, cursor: "not-allowed" }}
+  />
+</Field>
 
                   <Field label="Delivery Date" required error={errors.DelivaryDate}>
                     <input
