@@ -214,20 +214,47 @@ export default function JobCardForm() {
 
   /* ── Customer selection ── */
   const handleCustomerSelect = (c) => {
-    if (!c) {
-      setForm(prev => ({ ...prev, CustomerUid: null, ContactMobile: "", ContactPerson: "" }));
-      setSelCustomer(null);
-      return;
-    }
+  if (!c) {
     setForm(prev => ({
       ...prev,
-      CustomerUid:   c.uid,
-      ContactMobile: c.Mobile ? String(c.Mobile) : prev.ContactMobile,
-      ContactPerson: c.contactperson || prev.ContactPerson,
+      CustomerUid: null,
+      ContactMobile: "",
+      ContactPerson: "",
     }));
-    setSelCustomer(c);
-    if (errors.CustomerUid) setErrors(prev => ({ ...prev, CustomerUid: "" }));
-  };
+    setSelCustomer(null);
+    return;
+  }
+
+  // support all possible backend field names
+  const mobile =
+    c.Mobile ||
+    c.mobile ||
+    c.ContactMobile ||
+    "";
+
+  const contactPerson =
+    c.contactperson ||
+    c.ContactPerson ||
+    "";
+
+  setForm(prev => ({
+    ...prev,
+    CustomerUid: c.uid,
+
+    // auto-fill but still editable
+    ContactMobile: mobile ? String(mobile) : "",
+    ContactPerson: contactPerson,
+  }));
+
+  setSelCustomer(c);
+
+  if (errors.CustomerUid) {
+    setErrors(prev => ({
+      ...prev,
+      CustomerUid: "",
+    }));
+  }
+};
 
   /* ── Validate ── */
   const validate = () => {

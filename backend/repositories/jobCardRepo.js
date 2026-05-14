@@ -34,20 +34,37 @@ function normalizeRow(row) {
 
     ContactPerson:
       row.ContactPerson ??
+      row.contactperson ??
       "",
 
     // SQL may return MobileNo
     ContactMobile:
       row.ContactMobile ??
+      row.contactmobile ??
       row.MobileNo ??
       null,
 
     CustomerUid:
       row.CustomerUid ??
+      row.customeruid ??
       null,
+
+    // ✅ REQUIRED FOR EDIT MODE DISPLAY
+    Pname:
+      row.Pname ??
+      row.pname ??
+      row.Customer ??
+      "",
+
+    Pbranch:
+      row.Pbranch ??
+      row.pbranch ??
+      row.Branch ??
+      "",
 
     DelivaryDate:
       row.DelivaryDate ??
+      row.delivarydate ??
       null,
 
     Active: Number(
